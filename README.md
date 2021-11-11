@@ -1,8 +1,10 @@
+# rally-is-bad
+
 ## Objective
 
 Create a utiliy for migrating core information for projects, iterations, epics,
 features, and user stories including attachments and discussions from Rally (CA Agile)
-to [Clubhouse](https://clubhouse.io).
+to [Clubhouse](https://clubhouse.io) or [Jira](https://www.atlassian.com/software/jira).
 
 ## Working Notes
 
@@ -52,7 +54,7 @@ just looking for examples of how to do something similar.
 
 ### Recommendation: Try it in Isolation
 
-I'm writing this utility to support the companny I work for (BriteCore).
+I'm writing this utility to support the company I work for (BriteCore).
 Your mileage may vary with this tool.
 
 Clubhouse allows you to create multiple workspaces under an organization.
@@ -69,22 +71,39 @@ Assumptions:
 
 - You're using a Mac
 - You're using `pyenv`
-- You have `pyenv-virtualenv` installed as well
+
+#### pyenv-virtualenv
 
 From within your checkout:
 
-- `pyenv virtualenv 3.8.0 rally-to-clubhouse`
-- `pyenv local rally-to-clubhouse`
-- `pip install -r requirements.txt`
+```shell
+pyenv virtualenv 3.8.0 rally-to-anything
+pyenv local rally-to-anything
+pip install -r requirements.txt
+```
 
-Complete configuration:
+#### pipenv
 
-- Clubhouse API key
-- Rally API key
+From within your checkout:
+
+```shell
+pipenv install
+pipenv shell
+```
+
+#### Complete configuration
+
+```shell
+cp config.example.toml config.toml
+# edit config.toml
+# set api_key variables to live API key values and save
+```
+
+#### Running
 
 Run:
 
-- `python rally-to-clubhouse.py dump-rally --config <config-location>`
+- `python rally-to-anything.py dump-rally --config <config-location>`
 
 ### Tidbits
 

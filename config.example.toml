@@ -1,17 +1,22 @@
 [rally]
-output_root = "./rally-to-clubhouse/rally"
+output_root = "./rally-to-anything/rally"
 [rally.filters]
 ignored_projects = ["zArchived.*", "Special Projects"]
-skip_migration_tag = "SKIP-CLUBHOUSE-MIGRATION"
+skip_migration_tag = "SKIP-MIGRATION"
 
 [rally.sdk]
 api_key = "<API_KEY>"
 server = "rally1.rallydev.com"
-workspace = "BriteCore Workspace"
+workspace = "Example Workspace"
 
 [clubhouse]
 [clubhouse.api]
 api_key = "<API_KEY>"
+
+[jira]
+[jira.api]
+api_key = "<API_KEY>"
+server = "example.atlassian.net"
 
 #[mappings]
 #Tags = Label
@@ -24,7 +29,7 @@ api_key = "<API_KEY>"
 #{'TestCase', 'PortfolioItem/Feature', 'Task', 'PortfolioItem/Epic', 'HierarchicalRequirement'}
 #
 #[mappings.labels]
-#Cameron = "client: Cameron"
+#Foo = "client: Foo"
 #__unmapped__ = "__identity__"
 #
 #[mappings.comments]
