@@ -14,7 +14,7 @@ workspace = "Example Workspace"
 api_key = "<API_KEY>"
 
 [jira]
-[jira.api]
+[jira.sdk]
 api_key = "<API_KEY>"
 server = "example.atlassian.net"
 
