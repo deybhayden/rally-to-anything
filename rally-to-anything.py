@@ -26,7 +26,7 @@ def dump_rally(verbose, config):
         ):
             attachment.cache_to_disk()
 
-        artifact.write_to_disk()
+        click.echo(artifact.json())
 
 
 @cli.command()

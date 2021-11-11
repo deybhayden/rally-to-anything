@@ -17,6 +17,7 @@ tqdm = "*"
 
 [dev-packages]
 flake8 = "*"
+pudb = "*"
 
 [requires]
 python_version = "3.9"

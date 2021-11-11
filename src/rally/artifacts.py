@@ -19,6 +19,8 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
             "project": rally_artifact.Project.Name,
             "type": rally_artifact._type,
             "state": rally_artifact.FlowState.Name,
+            "priority": rally_artifact.Priority,
+            "components": rally_artifact.Components,
             "formattedId": rally_artifact.FormattedID,
             "description": rally_artifact.Description,
             "discussion": [

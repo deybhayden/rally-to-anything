@@ -8,7 +8,9 @@ workspace = "Example Workspace"
 project = "Example Project"
 
 [rally.artifacts]
+query = 'ScheduleState != "Done/Merged"'
 limit = 100
+threads = 4
 
 [clubhouse]
 [clubhouse.api]
