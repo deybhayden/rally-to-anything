@@ -1,8 +1,8 @@
-import src.rally
-
 import click
-import tqdm
 import toml
+import tqdm
+
+import src.rally
 
 
 @click.group()
@@ -11,16 +11,12 @@ def cli():
 
 
 @cli.command()
-@click.option(
-    "--output-root",
-    type=click.Path(file_okay=False, writable=True, resolve_path=True),
-    default="./rally",
-)
+@click.option("-v", "--verbose", default=False, is_flag=True)
 @click.option("--config", type=click.File(), required=True, default="./config.toml")
-def dump_rally(output_root, config):
+def dump_rally(verbose, config):
     config = toml.load(config)
     click.echo("Dumping from Rally...")
-    rally = src.rally.Rally(config)
+    rally = src.rally.Rally(config, verbose)
 
     for artifact in tqdm.tqdm(rally.artifacts, desc="Work Items"):
         for attachment in tqdm.tqdm(
@@ -28,7 +24,9 @@ def dump_rally(output_root, config):
             desc="Attachments",
             total=artifact.number_of_attachments,
         ):
-            attachment._cache_to_disk()
+            attachment.cache_to_disk()
+
+        artifact.write_to_disk()
 
 
 @cli.command()

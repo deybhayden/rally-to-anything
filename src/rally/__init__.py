@@ -1,1 +1,1 @@
-from .models import Rally, RallyArtifact, RallyAttachment
+from .core import Rally

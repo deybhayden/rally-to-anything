@@ -7,6 +7,9 @@ server = "rally1.rallydev.com"
 workspace = "Example Workspace"
 project = "Example Project"
 
+[rally.artifacts]
+limit = 100
+
 [clubhouse]
 [clubhouse.api]
 api_key = "<API_KEY>"
