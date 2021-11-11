@@ -13,8 +13,10 @@ requests = "==2.25.1"
 six = "==1.15.0"
 toml = "==0.10.2"
 urllib3 = "==1.26.3"
+tqdm = "*"
 
 [dev-packages]
+flake8 = "*"
 
 [requires]
 python_version = "3.9"

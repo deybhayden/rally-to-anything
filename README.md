@@ -71,23 +71,15 @@ Assumptions:
 
 - You're using a Mac
 - You're using `pyenv`
-
-#### pyenv-virtualenv
-
-From within your checkout:
-
-```shell
-pyenv virtualenv 3.8.0 rally-to-anything
-pyenv local rally-to-anything
-pip install -r requirements.txt
-```
+- You're using `pipenv`
 
 #### pipenv
 
 From within your checkout:
 
 ```shell
-pipenv install
+pyenv install 3.9.6
+pipenv install --python 3.9.6
 pipenv shell
 ```
 
@@ -112,6 +104,6 @@ Run:
 
 #### Resources
 
-- https://rally1.rallydev.com/slm/doc/webservice/
-- https://github.com/RallyTools/RallyRestToolkitForPython
-- https://clubhouse.io/api/rest/v3
+- [Rally Webservice](https://rally1.rallydev.com/slm/doc/webservice/)
+- [Rally Python SDK](https://github.com/RallyTools/RallyRestToolkitForPython)
+- [Clubhouse API](https://clubhouse.io/api/rest/v3)
