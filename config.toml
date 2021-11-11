@@ -1,0 +1,30 @@
+[rally]
+output_root = "./rally-to-clubhouse/rally"
+[rally.filters]
+ignored_projects = ["zArchived.*", "Special Projects"]
+skip_migration_tag = "SKIP-CLUBHOUSE-MIGRATION"
+
+[rally.sdk]
+api_key = "<API_KEY>"
+server = "rally1.rallydev.com"
+workspace = "BriteCore Workspace"
+
+[clubhouse]
+[clubhouse.api]
+api_key = "<API_KEY>"
+
+#[mappings]
+#Tags = Label
+#HierarchicalRequirement = Story
+#PortfolioItem/Feature = Epic
+#PortfolioItem/Epic = Milestone
+#Task = Task
+#TestCase = NULL
+#
+#{'TestCase', 'PortfolioItem/Feature', 'Task', 'PortfolioItem/Epic', 'HierarchicalRequirement'}
+#
+#[mappings.labels]
+#Cameron = "client: Cameron"
+#__unmapped__ = "__identity__"
+#
+#[mappings.comments]
