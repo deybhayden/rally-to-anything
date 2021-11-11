@@ -37,7 +37,7 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
 
 class RallyArtifact(object):
 
-    output_root = os.path.join(".", "rally-to-clubhouse", "rally")
+    output_root = os.path.join(".", "rally-to-anything", "rally")
 
     def __init__(
         self,
@@ -65,7 +65,7 @@ class RallyAttachment(object):
 
     server = "https://rally1.rallydev.com/"
     output_root = os.path.abspath(
-        os.path.join(".", "rally-to-clubhouse", "rally", "assets")
+        os.path.join(".", "rally-to-anything", "rally", "assets")
     )
 
     def __init__(self, attachment):
@@ -105,6 +105,7 @@ class Rally(object):
             server=config["rally"]["sdk"]["server"],
             apikey=config["rally"]["sdk"]["api_key"],
             workspace=config["rally"]["sdk"]["workspace"],
+            project=config["rally"]["sdk"].get("project"),
         )
         self.artifacts = [
             RallyArtifact(artifact) for artifact in tqdm.tqdm(self._get_artifacts())

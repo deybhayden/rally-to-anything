@@ -1,13 +1,11 @@
 [rally]
 output_root = "./rally-to-anything/rally"
-[rally.filters]
-ignored_projects = ["zArchived.*", "Special Projects"]
-skip_migration_tag = "SKIP-MIGRATION"
 
 [rally.sdk]
 api_key = "<API_KEY>"
 server = "rally1.rallydev.com"
 workspace = "Example Workspace"
+project = "Example Project"
 
 [clubhouse]
 [clubhouse.api]

@@ -1,4 +1,4 @@
-import src.rally.user_stories
+import src.rally
 
 import click
 import tqdm
@@ -16,11 +16,11 @@ def cli():
     type=click.Path(file_okay=False, writable=True, resolve_path=True),
     default="./rally",
 )
-@click.option("--config", type=click.File(), required=True)
+@click.option("--config", type=click.File(), required=True, default="./config.toml")
 def dump_rally(output_root, config):
     config = toml.load(config)
     click.echo("Dumping from Rally...")
-    rally = src.rally.user_stories.Rally(config)
+    rally = src.rally.Rally(config)
 
     for artifact in tqdm.tqdm(rally.artifacts, desc="Work Items"):
         for attachment in tqdm.tqdm(
@@ -32,7 +32,7 @@ def dump_rally(output_root, config):
 
 
 @cli.command()
-@click.option("--config", type=click.File())
+@click.option("--config", type=click.File(), default="./config.toml")
 def migrate(config):
     click.echo("Migrating...")
 
