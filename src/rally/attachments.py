@@ -12,9 +12,6 @@ class RallyAttachment(object):
     def __init__(self, attachment):
         self._attachment = attachment
 
-        os.makedirs(self.output_root, exist_ok=True)
-        self.cache_to_disk()
-
     def __getattr__(self, attribute):
         return getattr(self._attachment, attribute)
 

@@ -1,6 +1,6 @@
 # Project Specific
 config.toml
-rally-to-anything/rally/assets/
+rally-to-anything/rally/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -4,8 +4,6 @@ import pyral
 
 from .artifacts import RallyArtifact
 
-# from .portfolio_items import RallyPortfolioItem
-
 
 class Rally(object):
     def __init__(self, config, verbose):
