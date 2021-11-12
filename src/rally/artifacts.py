@@ -60,7 +60,10 @@ class RallyArtifact(object):
         return json.dumps(self, cls=RallyArtifactJSONSerializer)
 
     def write_to_disk(self):
-        return json.dump(self, cls=RallyArtifactJSONSerializer, )
+        return json.dump(
+            self,
+            cls=RallyArtifactJSONSerializer,
+        )
 
     @property
     def number_of_attachments(self):

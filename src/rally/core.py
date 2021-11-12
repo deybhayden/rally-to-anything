@@ -3,6 +3,7 @@ import time
 import pyral
 
 from .artifacts import RallyArtifact
+
 # from .portfolio_items import RallyPortfolioItem
 
 
@@ -21,9 +22,7 @@ class Rally(object):
         if self.verbose:
             print(f"Rally SDK initialized in {after - before:.2f} seconds")
 
-        self.artifacts = [
-            RallyArtifact(artifact) for artifact in self._get_artifacts()
-        ]
+        self.artifacts = [RallyArtifact(artifact) for artifact in self._get_artifacts()]
 
         # self.portfolio_items = [
         #     RallyPortfolioItem(item) for item in self._get_portfolio_items()
@@ -34,9 +33,11 @@ class Rally(object):
         kwargs = {
             "query": self._config["rally"]["artifacts"].get("query"),
             "limit": self._config["rally"]["artifacts"].get("limit"),
-            "threads": self._config["rally"]["artifacts"].get("threads")
+            "threads": self._config["rally"]["artifacts"].get("threads"),
         }
-        artifacts = self.sdk.get("Artifact", fetch=True, projectScopeDown=True, **kwargs)
+        artifacts = self.sdk.get(
+            "Artifact", fetch=True, projectScopeDown=True, **kwargs
+        )
         after = time.time()
         if self.verbose:
             print(f"Artifacts loaded in {after - before:.2f} seconds")
