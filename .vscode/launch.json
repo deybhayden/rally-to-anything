@@ -11,6 +11,14 @@
       "program": "${workspaceFolder}/rally-to-anything.py",
       "args": ["dump-rally", "-v"],
       "console": "integratedTerminal"
+    },
+    {
+      "name": "dump rally - clear cache",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/rally-to-anything.py",
+      "args": ["dump-rally", "-v", "-c"],
+      "console": "integratedTerminal"
     }
   ]
 }
