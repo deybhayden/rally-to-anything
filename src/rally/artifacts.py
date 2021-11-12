@@ -16,13 +16,28 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
     def _encode_rally_artifact_as_json(self, rally_artifact):
 
         artifact = {
+            "objectId": rally_artifact.ObjectID,
             "project": rally_artifact.Project.Name,
+            "name": rally_artifact.Name,
             "type": rally_artifact._type,
             "state": rally_artifact.FlowState.Name,
+            "scheduleState": rally_artifact.ScheduleState,
+            "iteration": self._get_iteration(rally_artifact),
+            "blocked": rally_artifact.Blocked,
+            "blockedReason": rally_artifact.BlockedReason,
+            "blocker": rally_artifact.Blocker,
             "priority": rally_artifact.Priority,
-            "components": rally_artifact.Components,
+            "component": rally_artifact.Component,
             "formattedId": rally_artifact.FormattedID,
             "description": rally_artifact.Description,
+            "notes": rally_artifact.Notes,
+            "milestones": rally_artifact.Milestones,
+            "acceptanceCriteria": rally_artifact.AcceptanceCriteria,
+            "createdBy": rally_artifact.CreatedBy.UserName,
+            "creationDate": rally_artifact.CreationDate,
+            "owner": rally_artifact.Owner.UserName if rally_artifact.Owner else None,
+            "planEstimate": rally_artifact.PlanEstimate,
+            "portfolioItem": self._get_porfolio_item(rally_artifact),
             "discussion": [
                 {
                     "user": comment.User,
@@ -33,6 +48,20 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
         }
 
         return artifact
+
+    def _get_porfolio_item(self, rally_artifact):
+        if rally_artifact.PortfolioItem:
+            return {
+                "objectId": rally_artifact.PortfolioItem.ObjectID,
+                "formattedId": rally_artifact.PortfolioItem.FormattedID,
+                "type": rally_artifact.PortfolioItem.PortfolioItemTypeName,
+            }
+
+    def _get_iteration(self, rally_artifact):
+        if rally_artifact.Iteration:
+            return {
+                "name": rally_artifact.Iteration.Name,
+            }
 
 
 class RallyArtifact(object):
@@ -54,16 +83,15 @@ class RallyArtifact(object):
 
     @property
     def disk_path(self):
-        return os.path.join(self.output_root, self.relative_path, self.FormattedID)
+        return os.path.join(self.output_root, self.relative_path, self.ObjectID)
 
     def json(self):
         return json.dumps(self, cls=RallyArtifactJSONSerializer)
 
     def write_to_disk(self):
-        return json.dump(
-            self,
-            cls=RallyArtifactJSONSerializer,
-        )
+        os.makedirs(os.path.dirname(self.disk_path), exist_ok=True)
+        with open(self.disk_path, "wb") as f:
+            return json.dump(self, f, cls=RallyArtifactJSONSerializer)
 
     @property
     def number_of_attachments(self):

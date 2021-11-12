@@ -24,25 +24,17 @@ class Rally(object):
 
         self.artifacts = [RallyArtifact(artifact) for artifact in self._get_artifacts()]
 
-        # self.portfolio_items = [
-        #     RallyPortfolioItem(item) for item in self._get_portfolio_items()
-        # ]
-
     def _get_artifacts(self):
         before = time.time()
-        kwargs = {
-            "query": self._config["rally"]["artifacts"].get("query"),
-            "limit": self._config["rally"]["artifacts"].get("limit"),
-            "threads": self._config["rally"]["artifacts"].get("threads"),
-        }
         artifacts = self.sdk.get(
-            "Artifact", fetch=True, projectScopeDown=True, **kwargs
+            "Artifact",
+            fetch=True,
+            projectScopeDown=True,
+            **self._config["rally"]["artifacts"],
         )
         after = time.time()
         if self.verbose:
+            print(artifacts)
             print(f"Artifacts loaded in {after - before:.2f} seconds")
 
         return artifacts
-
-    def _get_portfolio_items(self):
-        return self.sdk.get("PortfolioItem", fetch=True, projectScopeDown=True)
