@@ -26,6 +26,7 @@ def dump_rally(verbose, clear_cache, config):
             artifact.attachments(),
             desc="Attachments",
             total=artifact.number_of_attachments,
+            disable=artifact.number_of_attachments == 0,
         ):
             attachment.cache_to_disk(force=clear_cache)
 
