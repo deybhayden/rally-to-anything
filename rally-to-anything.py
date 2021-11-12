@@ -21,7 +21,7 @@ def dump_rally(verbose, clear_cache, config):
     if verbose:
         click.echo("Clearing local cache of artifacts and attachments...")
 
-    for artifact in tqdm.tqdm(rally.artifacts, desc="Work Items"):
+    for artifact in tqdm.tqdm(rally.artifacts, desc="Artifacts"):
         for attachment in tqdm.tqdm(
             artifact.attachments(),
             desc="Attachments",

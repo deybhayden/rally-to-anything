@@ -118,7 +118,7 @@ class RallyArtifact(object):
         return json.dumps(self, cls=RallyArtifactJSONSerializer)
 
     def cache_to_disk(self, force=False):
-        if not self.is_on_disk and not force:
+        if not self.is_on_disk or force:
             os.makedirs(os.path.dirname(self.disk_path), exist_ok=True)
             with open(self.disk_path, "w") as f:
                 return json.dump(self, f, cls=RallyArtifactJSONSerializer)

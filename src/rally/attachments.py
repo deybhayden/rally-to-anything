@@ -28,7 +28,7 @@ class RallyAttachment(object):
         return os.path.exists(self.disk_path)
 
     def cache_to_disk(self, force=False):
-        if not self.is_on_disk and not force:
+        if not self.is_on_disk or force:
             os.makedirs(os.path.dirname(self.disk_path), exist_ok=True)
             with open(self.disk_path, "wb") as f:
                 f.write(base64.b64decode(self._attachment.Content.Content))
