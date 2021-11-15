@@ -2,11 +2,17 @@ import functools
 import json
 import os
 
+from pyral.entity import UnreferenceableOIDError
+
 from .attachments import RallyAttachment
 
 
 def _format_user(user):
-    return {"userName": user.UserName, "displayName": user.DisplayName}
+    """Return a User Dictionary if the User is still a valid entity in Rally."""
+    try:
+        return {"userName": user.UserName, "displayName": user.DisplayName}
+    except UnreferenceableOIDError:
+        return
 
 
 class RallyArtifactJSONSerializer(json.JSONEncoder):
