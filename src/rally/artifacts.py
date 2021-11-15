@@ -29,9 +29,9 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
             "iteration": self._get_iteration(rally_artifact),
             "blocked": rally_artifact.Blocked,
             "blockedReason": rally_artifact.BlockedReason,
-            "blocker": rally_artifact.Blocker,
+            "blocker": self._get_blocker(rally_artifact),
             "priority": _get_or_none(rally_artifact, "Priority"),
-            "component": rally_artifact.Component,
+            "component": _get_or_none(rally_artifact, "Component"),
             "formattedId": rally_artifact.FormattedID,
             "description": rally_artifact.Description,
             "notes": rally_artifact.Notes,
@@ -56,11 +56,29 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
     def _format_user(self, user):
         return {"userName": user.UserName, "displayName": user.DisplayName}
 
+    def _get_blocker(self, rally_artifact):
+        blocker = _get_or_none(rally_artifact, "Blocker")
+        if blocker:
+            return {
+                "objectId": blocker.ObjectID,
+                "name": blocker.Name,
+                "blockedBy": self._format_user(blocker.BlockedBy),
+                "creationDate": blocker.CreationDate,
+            }
+
     def _get_iteration(self, rally_artifact):
         iteration = _get_or_none(rally_artifact, "Iteration")
         if iteration:
             return {
+                "objectId": iteration.ObjectID,
                 "name": iteration.Name,
+                "creationDate": iteration.CreationDate,
+                "startDate": iteration.StartDate,
+                "endDate": iteration.EndDate,
+                "state": iteration.State,
+                "planEstimate": iteration.PlanEstimate,
+                "plannedVelocity": iteration.PlannedVelocity,
+                "theme": iteration.Theme,
             }
 
     def _get_milestones(self, rally_artifact):
