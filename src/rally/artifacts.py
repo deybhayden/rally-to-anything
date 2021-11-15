@@ -12,6 +12,8 @@ def _format_user(user):
     try:
         return {"userName": user.UserName, "displayName": user.DisplayName}
     except UnreferenceableOIDError:
+        return {"name": user.Name}
+    except UnreferenceableOIDError:
         return
 
 
