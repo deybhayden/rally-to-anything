@@ -23,7 +23,7 @@ class Rally(object):
         self.artifacts = []
         for section_name, section in config["rally"]["artifacts"].items():
             self.artifacts += [
-                RallyArtifact(artifact)
+                RallyArtifact(artifact, section_name)
                 for artifact in self._get_artifacts(section_name, section)
             ]
 
