@@ -20,19 +20,25 @@ class Rally(object):
         if self.verbose:
             print(f"Rally SDK initialized in {after - before:.2f} seconds")
 
-        self.artifacts = [RallyArtifact(artifact) for artifact in self._get_artifacts()]
+        self.artifacts = []
+        for section_name, section in config["rally"]["artifacts"].items():
+            self.artifacts += [
+                RallyArtifact(artifact)
+                for artifact in self._get_artifacts(section_name, section)
+            ]
 
-    def _get_artifacts(self):
+    def _get_artifacts(self, section_name, section):
         before = time.time()
+        kwargs = {"query": section["query"], "threads": section["threads"]}
         artifacts = self.sdk.get(
-            "Artifact",
+            section["entity"],
             fetch=True,
             projectScopeDown=True,
-            **self._config["rally"]["artifacts"],
+            **kwargs,
         )
         after = time.time()
         if self.verbose:
             print(artifacts)
-            print(f"Artifacts loaded in {after - before:.2f} seconds")
+            print(f"{section_name} loaded in {after - before:.2f} seconds")
 
         return artifacts

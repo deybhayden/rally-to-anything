@@ -7,9 +7,14 @@ server = "rally1.rallydev.com"
 workspace = "Example Workspace"
 project = "Example Project"
 
-[rally.artifacts]
-query = 'ScheduleState != "Done/Merged"'
-limit = 100
+[rally.artifacts.features]
+entity = "PortfolioItem/Feature"
+query = ["State != Done", "State != Removed"]
+threads = 4
+
+[rally.artifacts.defects]
+entity = "Defect"
+query = "((State = Open) OR (State = Submitted))"
 threads = 4
 
 [clubhouse]
