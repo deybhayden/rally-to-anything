@@ -110,9 +110,9 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
             }
 
     def _get_state(self, rally_artifact):
-        flow_state = rally_artifact._get_or_none("FlowState")
-        if flow_state:
-            return flow_state.Name
+        state = rally_artifact._get_or_none("State")
+        if state:
+            return state.Name if hasattr(state, "Name") else state
 
 
 class RallyArtifact(object):
