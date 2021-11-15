@@ -14,6 +14,7 @@ six = "==1.15.0"
 toml = "==0.10.2"
 urllib3 = "==1.26.3"
 tqdm = "*"
+jira = "*"
 
 [dev-packages]
 flake8 = "*"
