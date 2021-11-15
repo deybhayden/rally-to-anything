@@ -5,8 +5,8 @@ import os
 from .attachments import RallyAttachment
 
 
-def _get_or_none(rally_artifact, attr):
-    return getattr(rally_artifact, attr, None)
+def _format_user(user):
+    return {"userName": user.UserName, "displayName": user.DisplayName}
 
 
 class RallyArtifactJSONSerializer(json.JSONEncoder):
@@ -25,26 +25,27 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
             "name": rally_artifact.Name,
             "type": rally_artifact._type,
             "state": self._get_state(rally_artifact),
-            "scheduleState": _get_or_none(rally_artifact, "ScheduleState"),
+            "scheduleState": rally_artifact._get_or_none("ScheduleState"),
             "iteration": self._get_iteration(rally_artifact),
             "blocked": rally_artifact.Blocked,
             "blockedReason": rally_artifact.BlockedReason,
             "blocker": self._get_blocker(rally_artifact),
-            "priority": _get_or_none(rally_artifact, "Priority"),
-            "component": _get_or_none(rally_artifact, "Component"),
+            "priority": rally_artifact._get_or_none("Priority"),
+            "component": rally_artifact._get_or_none("Component"),
             "formattedId": rally_artifact.FormattedID,
             "description": rally_artifact.Description,
             "notes": rally_artifact.Notes,
             "milestones": self._get_milestones(rally_artifact),
-            "acceptanceCriteria": _get_or_none(rally_artifact, "AcceptanceCriteria"),
-            "createdBy": self._format_user(rally_artifact.CreatedBy),
+            "acceptanceCriteria": rally_artifact._get_or_none("AcceptanceCriteria"),
+            "createdBy": _format_user(rally_artifact.CreatedBy),
             "creationDate": rally_artifact.CreationDate,
             "owner": self._get_owner(rally_artifact),
-            "planEstimate": _get_or_none(rally_artifact, "PlanEstimate"),
+            "planEstimate": rally_artifact._get_or_none("PlanEstimate"),
             "portfolioItem": self._get_porfolio_item(rally_artifact),
+            "dragAndDropRank": rally_artifact._get_or_none("DragAndDropRank"),
             "discussion": [
                 {
-                    "user": self._format_user(comment.User),
+                    "user": _format_user(comment.User),
                     "text": comment.Text,
                 }
                 for comment in rally_artifact.Discussion
@@ -53,21 +54,18 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
 
         return artifact
 
-    def _format_user(self, user):
-        return {"userName": user.UserName, "displayName": user.DisplayName}
-
     def _get_blocker(self, rally_artifact):
-        blocker = _get_or_none(rally_artifact, "Blocker")
+        blocker = rally_artifact._get_or_none("Blocker")
         if blocker:
             return {
                 "objectId": blocker.ObjectID,
                 "name": blocker.Name,
-                "blockedBy": self._format_user(blocker.BlockedBy),
+                "blockedBy": _format_user(blocker.BlockedBy),
                 "creationDate": blocker.CreationDate,
             }
 
     def _get_iteration(self, rally_artifact):
-        iteration = _get_or_none(rally_artifact, "Iteration")
+        iteration = rally_artifact._get_or_none("Iteration")
         if iteration:
             return {
                 "objectId": iteration.ObjectID,
@@ -94,10 +92,10 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
 
     def _get_owner(self, rally_artifact):
         if rally_artifact.Owner:
-            return self._format_user(rally_artifact.Owner)
+            return _format_user(rally_artifact.Owner)
 
     def _get_porfolio_item(self, rally_artifact):
-        portfolio_item = _get_or_none(rally_artifact, "PortfolioItem")
+        portfolio_item = rally_artifact._get_or_none("PortfolioItem")
         if portfolio_item:
             return {
                 "objectId": portfolio_item.ObjectID,
@@ -106,7 +104,7 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
             }
 
     def _get_state(self, rally_artifact):
-        flow_state = _get_or_none(rally_artifact, "FlowState")
+        flow_state = rally_artifact._get_or_none("FlowState")
         if flow_state:
             return flow_state.Name
 
@@ -123,6 +121,9 @@ class RallyArtifact(object):
 
     def __getattr__(self, attribute):
         return getattr(self._artifact, attribute)
+
+    def _get_or_none(self, attr):
+        return getattr(self._artifact, attr, None)
 
     @property
     def disk_path(self):
