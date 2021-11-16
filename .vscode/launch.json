@@ -19,6 +19,14 @@
       "program": "${workspaceFolder}/rally-to-anything.py",
       "args": ["dump-rally", "-v", "-c"],
       "console": "integratedTerminal"
+    },
+    {
+      "name": "migrate jira",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/rally-to-anything.py",
+      "args": ["migrate-jira", "-v"],
+      "console": "integratedTerminal"
     }
   ]
 }

@@ -23,21 +23,14 @@ api_key = "<API_KEY>"
 
 [jira]
 [jira.sdk]
-api_key = "<API_KEY>"
-server = "example.atlassian.net"
+email = "john@example.com"
+api_token = "<API_KEY>"
+server = "https://example.atlassian.net"
 
-#[mappings]
-#Tags = Label
-#HierarchicalRequirement = Story
-#PortfolioItem/Feature = Epic
-#PortfolioItem/Epic = Milestone
-#Task = Task
-#TestCase = NULL
-#
-#{'TestCase', 'PortfolioItem/Feature', 'Task', 'PortfolioItem/Epic', 'HierarchicalRequirement'}
-#
-#[mappings.labels]
-#Foo = "client: Foo"
-#__unmapped__ = "__identity__"
-#
-#[mappings.comments]
+[jira.artifacts.mappings]
+HierarchicalRequirement = "Task"
+"PortfolioItem/Feature" = "Story"
+"PortfolioItem/Epic" = "Epic"
+Task = "Sub-task"
+[jira.artifacts.labels]
+fields = ["milestones"]

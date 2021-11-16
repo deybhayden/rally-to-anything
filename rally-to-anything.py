@@ -3,6 +3,7 @@ import toml
 import tqdm
 
 import src.rally
+import src.jira
 
 
 @click.group()
@@ -34,9 +35,13 @@ def dump_rally(verbose, clear_cache, config):
 
 
 @cli.command()
-@click.option("--config", type=click.File(), default="./config.toml")
-def migrate(config):
-    click.echo("Migrating...")
+@click.option("-v", "--verbose", default=False, is_flag=True)
+@click.option("--config", type=click.File(), required=True, default="./config.toml")
+def migrate_jira(verbose, config):
+    config = toml.load(config)
+    click.echo("Migrating local Rally store to Jira Cloud...")
+    jira = src.jira.Jira(config, verbose)
+    jira.migrate_rally_artifacts()
 
 
 if __name__ == "__main__":
