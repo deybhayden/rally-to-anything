@@ -18,7 +18,7 @@ def dump_rally(verbose, clear_cache, config):
     config = toml.load(config)
     click.echo("Dumping from Rally...")
     rally = src.rally.Rally(config, verbose)
-    if verbose:
+    if verbose and clear_cache:
         click.echo("Clearing local cache of artifacts and attachments...")
 
     for artifact in tqdm.tqdm(rally.artifacts, desc="Artifacts"):
