@@ -25,7 +25,9 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
 
         return json_encoder(obj)
 
-    def _encode_rally_artifact_as_json(self, rally_artifact, recurse_parent=True):
+    def _encode_rally_artifact_as_json(
+        self, rally_artifact, recurse_parent=True, recurse_children=True
+    ):
         artifact = {
             "objectId": rally_artifact.ObjectID,
             "project": rally_artifact.Project.Name,
@@ -44,7 +46,6 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
             "notes": rally_artifact.Notes,
             "milestones": self._get_milestones(rally_artifact),
             "acceptanceCriteria": rally_artifact._get_or_none("AcceptanceCriteria"),
-            "children": self._get_children(rally_artifact),
             "createdBy": _format_user(rally_artifact.CreatedBy),
             "creationDate": rally_artifact.CreationDate,
             "owner": self._get_owner(rally_artifact),
@@ -62,6 +63,14 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
         if recurse_parent:
             artifact["parent"] = self._get_parent(rally_artifact)
 
+        if recurse_children:
+            artifact["children"] = self._get_children(rally_artifact)
+
+            if hasattr(rally_artifact, "UserStories"):
+                artifact["stories"] = self._get_children(
+                    rally_artifact, attr="UserStories"
+                )
+
         return artifact
 
     def _get_blocker(self, rally_artifact):
@@ -74,9 +83,9 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
                 "creationDate": blocker.CreationDate,
             }
 
-    def _get_children(self, rally_artifact):
-        children = rally_artifact._get_or_none("Children")
+    def _get_children(self, rally_artifact, attr="Children"):
         encoded_children = []
+        children = rally_artifact._get_or_none(attr)
         if children:
             for child in children:
                 child_artifact = RallyArtifact(child)
@@ -121,7 +130,9 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
         parent = rally_artifact._get_or_none("Parent")
         if parent:
             parent_artifact = RallyArtifact(parent)
-            return self._encode_rally_artifact_as_json(parent_artifact)
+            return self._encode_rally_artifact_as_json(
+                parent_artifact, recurse_children=False
+            )
 
     def _get_state(self, rally_artifact):
         state = rally_artifact._get_or_none("State")
