@@ -32,6 +32,7 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
             "objectId": rally_artifact.ObjectID,
             "project": rally_artifact.Project.Name,
             "name": rally_artifact.Name,
+            "release": self._get_release(rally_artifact),
             "type": rally_artifact._type,
             "state": self._get_state(rally_artifact),
             "scheduleState": rally_artifact._get_or_none("ScheduleState"),
@@ -133,6 +134,21 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
             return self._encode_rally_artifact_as_json(
                 parent_artifact, recurse_children=False
             )
+
+    def _get_release(self, rally_artifact):
+        artifact = rally_artifact._get_or_none("Release")
+        if artifact:
+            return {
+                "objectId": artifact.ObjectID,
+                "name": artifact.Name,
+                "creationDate": artifact.CreationDate,
+                "releaseStartDate": artifact.ReleaseStartDate,
+                "releaseDate": artifact.ReleaseDate,
+                "state": artifact.State,
+                "planEstimate": artifact.PlanEstimate,
+                "plannedVelocity": artifact.PlannedVelocity,
+                "theme": artifact.Theme,
+            }
 
     def _get_state(self, rally_artifact):
         state = rally_artifact._get_or_none("State")

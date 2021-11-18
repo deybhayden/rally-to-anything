@@ -5,6 +5,22 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "dump rally with attachments",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/rally-to-anything.py",
+      "args": ["dump-rally", "-v", "-a"],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "dump rally with attachments - clear cache",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/rally-to-anything.py",
+      "args": ["dump-rally", "-v", "-c", "-a"],
+      "console": "integratedTerminal"
+    },
+    {
       "name": "dump rally",
       "type": "python",
       "request": "launch",
