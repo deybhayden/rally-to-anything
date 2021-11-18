@@ -27,10 +27,22 @@ email = "john@example.com"
 api_token = "<API_KEY>"
 server = "https://example.atlassian.net"
 
-[jira.artifacts.mappings]
+[jira.project]
+key = "EXA"
+
+[jira.mappings.artifacts]
+Defect = "Bug"
 HierarchicalRequirement = "Task"
-"PortfolioItem/Feature" = "Story"
+"PortfolioItem" = "Story"
 "PortfolioItem/Epic" = "Epic"
 Task = "Sub-task"
-[jira.artifacts.labels]
+
+[jira.mappings.priority]
+Critical = "Critical"
+Urgent = "Highest"
+High = "Medium"
+Normal = "Low"
+Low = "Lowest"
+
+[jira.mappings.labels]
 fields = ["milestones"]

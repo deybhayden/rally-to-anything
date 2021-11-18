@@ -1,1 +1,1 @@
-from .core import Jira
+from .core import JiraMigrator
