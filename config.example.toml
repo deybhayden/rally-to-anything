@@ -44,5 +44,25 @@ High = "Medium"
 Normal = "Low"
 Low = "Lowest"
 
+[jira.mappings.status]
+Backlog = "Backlog"
+Defined = "Defined"
+"Discovery" = "To Do"
+"To Do" = "To Do"
+"Developing" = "In Progress"
+"In-Progress" = "In Progress"
+"In Progress" = "In Progress"
+"Measuring" = "In Progress"
+Complete = "Complete"
+Accepted = "Accepted"
+"Done" = "Done"
+"Done/Merged" = "Done"
+Submitted = "Submitted"
+Open = "Open"
+Closed = "Closed"
+"Won't Fix" = "Won't Fix"
+"Duplicate" = "Duplicate"
+"Not a Defect" = "Rejected"
+
 [jira.mappings.labels]
-fields = ["milestones"]
+fields = ["iteration", "release", "milestones"]

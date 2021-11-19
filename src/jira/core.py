@@ -52,6 +52,7 @@ class RallyArtifactTranslator(object):
             artifact["createdBy"]["userName"]
         )
         assignee = self.migrator._search_for_jira_user(artifact["owner"]["userName"])
+        status = self._get_status(artifact)
 
         issue = {
             "project": self.jira_config["project"],
@@ -59,28 +60,31 @@ class RallyArtifactTranslator(object):
             "description": f"{artifact['description']}\n{artifact['notes']}",
             "comments": self._get_comments(artifact),
             "labels": self._get_labels(artifact),
-            "priority": priority,
+            "summary": f"{artifact['formattedId']} - {artifact['name']}",
             "reporter": {"id": reporter.accountId},
             "assignee": {"id": assignee.accountId},
         }
 
+        if priority:
+            issue["priority"] = priority
+
         attachment_translator.add_attachments(issue)
 
         if issuetype == "Epic":
-            issue["labels"].append(artifact["state"])
             # 'customfield_10005' == 'Epic Name')
+            # 'customfield_10006' == 'Epic Status')
             issue.update(
                 {
-                    "customfield_10005": f"{artifact['formattedId']} - {artifact['name']}",
-                    "summary": f"{artifact['name']}",
+                    "customfield_10005": issue["summary"],
+                    "customfield_10006": {"value": self._get_status(artifact)},
+                    "status": status,
                 }
             )
         else:
             issue.update(
                 {
-                    "summary": f"{artifact['formattedId']} - {artifact['name']}",
                     "components": self._get_components(artifact),
-                    "status": self._get_status(artifact),
+                    "status": status,
                 }
             )
 
@@ -121,11 +125,9 @@ class RallyArtifactTranslator(object):
 
     def _get_status(self, artifact):
         if artifact["scheduleState"]:
-            return self.jira_config["mappings"]["schedulestate"][
-                artifact["scheduleState"]
-            ]
-        elif artifact["scheduleState"]:
-            return self.jira_config["mappings"]["state"][artifact["state"]]
+            return self.jira_config["mappings"]["status"][artifact["scheduleState"]]
+        elif artifact["state"]:
+            return self.jira_config["mappings"]["status"][artifact["state"]]
 
 
 class JiraMigrator(object):
@@ -171,7 +173,7 @@ class JiraMigrator(object):
         if issue_keys:
             jira_mapping["issue"]["issuelinks"] = issue_keys
 
-        issue = self._sdk_create_issue(jira_mapping["issue"], linked_issues=issue_keys)
+        issue = self._sdk_create_issue(jira_mapping["issue"])
         issue_keys.append(issue.key)
 
         if epic_id:
@@ -201,7 +203,10 @@ class JiraMigrator(object):
     def _sdk_create_issue(self, field_list):
         comments = field_list.pop("comments", [])
         attachments = field_list.pop("attachments", [])
+        status = field_list.pop("status", None)
+
         new_issue = self.sdk.create_issue(fields=field_list)
+        self._sdk_set_status(new_issue, status)
 
         for attachment in attachments:
             self.sdk.add_attachment(new_issue, attachment=attachment)
@@ -210,6 +215,13 @@ class JiraMigrator(object):
             self.sdk.add_comment(new_issue, comment)
 
         return new_issue
+
+    def _sdk_set_status(self, new_issue, status):
+        transitions = self.sdk.transitions(new_issue)
+        for transition in transitions:
+            if transition["name"] == status:
+                self.sdk.transition_issue(new_issue, transition["id"])
+                return
 
     def _search_for_jira_user(self, rally_username):
         if rally_username in self.jira_user_cache:
