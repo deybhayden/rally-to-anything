@@ -8,35 +8,33 @@ to [Clubhouse](https://clubhouse.io) or [Jira](https://www.atlassian.com/softwar
 
 ## Working Notes
 
-**I'm still working and this tool is not yet complete and usable**.
+:warning: :warning: **WORK IN PROGRESS - USE AT YOUR OWN RISK** :warning: :warning:
 
 The notes below will evolve into full sections over time, but if
 you're reading this text you should ignore this project unless you're
 just looking for examples of how to do something similar.
 
-### Planned Behavior/Functionality
+### Functionality
 
 - CLI driven
 - Configurable exclusion of:
-  - Projects by name
-  - Artifacts by tag
-- Configurable mapping and aggregation for Rally fields with
-  sane defaults.
+  - Multiple Artifacts by Rally Query
+- Configurable mapping and aggregation for Rally fields with sane defaults.
 - Dump and serialize data from Rally on disk with support for incremental updates
   when data changes (all data new first run). Support for:
   - Iterations
   - Epics, Features, User Stories, Defects
   - Discussions and attachments for above.
-  - Open question: Milestones?
-- Migrate serialized Rally data produced by this utility to Clubhouse.
-  |Rally|Clubhouse|
-  |--|--|
-  |Iteration|Iteration|
-  |Milestones|Milestones|
-  |Epic|Epic|
-  |Feature|Epic|
-  |User Story|Story|
-  |Defect|Story (type: :bug:)|
+  - Dynamic fields converted to labels: Milestones, Releases
+- Migrate serialized Rally data produced by this utility
+  |Rally|Clubhouse|Jira|
+  |--|--|--|
+  |Iteration|Iteration|Label|
+  |Milestones|Milestones|Label|
+  |Epic|Epic|Epic|
+  |Feature|Epic|Story|
+  |User Story|Story|Task
+  |Defect|Story (type: :bug:)|Bug
 
   Fields to be converted based upon configuration. Reasonable defaults
   will be defined in the repository as examples/for ease of use.
@@ -45,7 +43,7 @@ just looking for examples of how to do something similar.
   possible and will be shared as lins in comments otherwise.
 
   Attachments references in fields or discussions will be updated to
-  refer to the Clubhouse file.
+  refer to the Clubhouse/Jira file.
 
   Discussions will be converted as comments.
 
@@ -54,11 +52,11 @@ just looking for examples of how to do something similar.
 
 ### Recommendation: Try it in Isolation
 
-I'm writing this utility to support the company I work for (BriteCore).
-Your mileage may vary with this tool.
+:dragon: Your mileage may vary with this tool.
 
-Clubhouse allows you to create multiple workspaces under an organization.
-If you want to inspect the resutls of running this utility against your own
+Clubhouse allows you to create multiple workspaces under an organization. Jira can make many different projects for experimenting.
+
+If you want to inspect the results of running this utility against your own
 environment, I suggest starting with a sample in an isolated workspace in case
 you don't like the results.
 
@@ -79,8 +77,7 @@ From within your checkout:
 
 ```shell
 pyenv install 3.9.6
-pipenv install --python 3.9.6 .
-pipenv install --editable .
+pipenv install --python 3.9.6 . --editable .
 ```
 
 #### Complete configuration
@@ -93,10 +90,11 @@ cp config.example.toml config.toml
 
 #### Running
 
-Run:
-
-- `rally-to-anything dump-rally --config <config-location>`
-- `rally-to-anything migrate-jira --config <config-location>`
+```shell
+pipenv shell
+rally-to-anything dump-rally --config <config-location> --attachments
+rally-to-anything migrate-jira --config <config-location>
+```
 
 ### Tidbits
 
