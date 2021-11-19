@@ -46,6 +46,8 @@ class RallyArtifactTranslator(object):
 
     def create_issue(self, artifact):
         attachment_translator = RallyAttachmentTranslator(artifact)
+        issuetype = self.jira_config["mappings"]["artifacts"][artifact["type"]]
+        priority = self.jira_config["mappings"]["priority"].get(artifact["priority"])
         reporter = self.migrator._search_for_jira_user(
             artifact["createdBy"]["userName"]
         )
@@ -53,23 +55,34 @@ class RallyArtifactTranslator(object):
 
         issue = {
             "project": self.jira_config["project"],
-            "issuetype": {
-                "name": self.jira_config["mappings"]["artifacts"][artifact["type"]]
-            },
-            "summary": f"{artifact['formattedId']} - {artifact['name']}",
+            "issuetype": {"name": issuetype},
             "description": f"{artifact['description']}\n{artifact['notes']}",
-            "components": self._get_components(artifact),
             "comments": self._get_comments(artifact),
-            "priority": self.jira_config["mappings"]["priority"].get(
-                artifact["priority"]
-            ),
-            "status": self._get_status(artifact),
             "labels": self._get_labels(artifact),
+            "priority": priority,
             "reporter": {"id": reporter.accountId},
             "assignee": {"id": assignee.accountId},
         }
 
         attachment_translator.add_attachments(issue)
+
+        if issuetype == "Epic":
+            issue["labels"].append(artifact["state"])
+            # 'customfield_10005' == 'Epic Name')
+            issue.update(
+                {
+                    "customfield_10005": f"{artifact['formattedId']} - {artifact['name']}",
+                    "summary": f"{artifact['name']}",
+                }
+            )
+        else:
+            issue.update(
+                {
+                    "summary": f"{artifact['formattedId']} - {artifact['name']}",
+                    "components": self._get_components(artifact),
+                    "status": self._get_status(artifact),
+                }
+            )
 
         return issue
 
@@ -188,11 +201,6 @@ class JiraMigrator(object):
     def _sdk_create_issue(self, field_list):
         comments = field_list.pop("comments", [])
         attachments = field_list.pop("attachments", [])
-
-        for empty_check in ("priority", "components"):
-            if not field_list[empty_check]:
-                del field_list[empty_check]
-
         new_issue = self.sdk.create_issue(fields=field_list)
 
         for attachment in attachments:

@@ -20,5 +20,5 @@ setuptools.setup(
     ],
     python_requires=">=3.9",
     install_requires=["click", "pyral", "toml", "tqdm", "jira"],
-    scripts=["bin/rally-to-anything", "bin/manage-jira-users"],
+    scripts=["bin/rally-to-anything", "bin/manage-jira"],
 )

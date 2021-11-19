@@ -44,5 +44,28 @@ def delete_suspended_users(dry_run, users_csv, config):
             click.echo(f"Failed to delete {user['email']}: {err}")
 
 
+@cli.command()
+@click.option("-d", "--dry-run", default=False, is_flag=True)
+@click.option("--config", type=click.File(), required=True, default="./config.toml")
+def empty_jira_project(dry_run, config):
+    config = toml.load(config)
+    project = config["jira"]["project"]["key"]
+    click.echo(f"Emptying Jira project '{project}'...")
+    jira = JIRA(
+        config["jira"]["sdk"]["server"],
+        basic_auth=(
+            config["jira"]["sdk"]["email"],
+            config["jira"]["sdk"]["api_token"],
+        ),
+    )
+    issues = jira.search_issues(f"project='{project}'")
+
+    for issue in tqdm.tqdm(issues):
+        if dry_run:
+            click.echo(f"Dry run - would've deleted: {issue.key}...")
+        else:
+            issue.delete()
+
+
 if __name__ == "__main__":
     cli()
