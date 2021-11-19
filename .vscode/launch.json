@@ -8,7 +8,7 @@
       "name": "dump rally with attachments",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/rally-to-anything.py",
+      "program": "${workspaceFolder}/bin/rally-to-anything",
       "args": ["dump-rally", "-v", "-a"],
       "console": "integratedTerminal"
     },
@@ -16,7 +16,7 @@
       "name": "dump rally with attachments - clear cache",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/rally-to-anything.py",
+      "program": "${workspaceFolder}/bin/rally-to-anything",
       "args": ["dump-rally", "-v", "-c", "-a"],
       "console": "integratedTerminal"
     },
@@ -24,7 +24,7 @@
       "name": "dump rally",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/rally-to-anything.py",
+      "program": "${workspaceFolder}/bin/rally-to-anything",
       "args": ["dump-rally", "-v"],
       "console": "integratedTerminal"
     },
@@ -32,7 +32,7 @@
       "name": "dump rally - clear cache",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/rally-to-anything.py",
+      "program": "${workspaceFolder}/bin/rally-to-anything",
       "args": ["dump-rally", "-v", "-c"],
       "console": "integratedTerminal"
     },
@@ -40,7 +40,7 @@
       "name": "migrate jira",
       "type": "python",
       "request": "launch",
-      "program": "${workspaceFolder}/rally-to-anything.py",
+      "program": "${workspaceFolder}/bin/rally-to-anything",
       "args": ["migrate-jira", "-v"],
       "console": "integratedTerminal"
     }

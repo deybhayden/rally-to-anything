@@ -1,0 +1,48 @@
+import csv
+
+import click
+import toml
+import tqdm
+from jira import JIRA, JIRAError
+
+
+@click.group()
+def cli():
+    pass
+
+
+@cli.command()
+@click.option("-d", "--dry-run", default=False, is_flag=True)
+@click.option(
+    "-u",
+    "--users-csv",
+    type=click.File(),
+    required=True,
+    default="./export-users.csv",
+)
+@click.option("--config", type=click.File(), required=True, default="./config.toml")
+def delete_suspended_users(dry_run, users_csv, config):
+    config = toml.load(config)
+    users_reader = csv.DictReader(users_csv)
+    suspended_users = [u for u in users_reader if u["User status"] == "Suspended"]
+    click.echo(f"Deleting {len(suspended_users)} suspended users...")
+    jira = JIRA(
+        config["jira"]["sdk"]["server"],
+        basic_auth=(
+            config["jira"]["sdk"]["email"],
+            config["jira"]["sdk"]["api_token"],
+        ),
+    )
+    if dry_run:
+        click.echo("Dry run - exiting...")
+        return
+
+    for user in tqdm.tqdm(suspended_users):
+        try:
+            jira.delete_user(username=f"{user['email']}&accountId={user['User id']}")
+        except JIRAError as err:
+            click.echo(f"Failed to delete {user['email']}: {err}")
+
+
+if __name__ == "__main__":
+    cli()

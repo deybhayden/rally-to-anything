@@ -79,8 +79,8 @@ From within your checkout:
 
 ```shell
 pyenv install 3.9.6
-pipenv install --python 3.9.6
-pipenv shell
+pipenv install --python 3.9.6 .
+pipenv install --editable .
 ```
 
 #### Complete configuration
@@ -95,7 +95,8 @@ cp config.example.toml config.toml
 
 Run:
 
-- `python rally-to-anything.py dump-rally --config <config-location>`
+- `rally-to-anything dump-rally --config <config-location>`
+- `rally-to-anything migrate-jira --config <config-location>`
 
 ### Tidbits
 

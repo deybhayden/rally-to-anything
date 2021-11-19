@@ -43,7 +43,7 @@ def migrate_jira(verbose, config):
     config = toml.load(config)
     click.echo("Migrating local Rally store to Jira Cloud...")
     migrator = src.jira.JiraMigrator(config, verbose)
-    for artifact in tqdm.tqdm(migrator.rally_artifacts[:2], desc="Artifacts"):
+    for artifact in tqdm.tqdm(migrator.rally_artifacts[:10], desc="Artifacts"):
         migrator.migrate_rally_artifact(artifact)
 
 

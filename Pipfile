@@ -15,6 +15,7 @@ toml = "==0.10.2"
 urllib3 = "==1.26.3"
 tqdm = "*"
 jira = "*"
+rally-to-anything = {editable = true, path = "."}
 
 [dev-packages]
 flake8 = "*"

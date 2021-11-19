@@ -16,13 +16,13 @@ class RallyAttachmentTranslator(object):
 
     @property
     def attachment_dirpath(self):
-        os.path.join(
+        return os.path.join(
             RallyAttachment.output_root,
             "slm",
             "webservice",
             "v2.0",
             "attachment",
-            self.artifact["objectId"],
+            str(self.artifact["objectId"]),
         )
 
     @property
@@ -40,26 +40,33 @@ class RallyAttachmentTranslator(object):
 
 
 class RallyArtifactTranslator(object):
-    def __init__(self, config):
-        self._config = config
+    def __init__(self, migrator):
+        self.migrator = migrator
+        self.jira_config = self.migrator._config["jira"]
 
     def create_issue(self, artifact):
         attachment_translator = RallyAttachmentTranslator(artifact)
+        reporter = self.migrator._search_for_jira_user(
+            artifact["createdBy"]["userName"]
+        )
+        assignee = self.migrator._search_for_jira_user(artifact["owner"]["userName"])
+
         issue = {
-            "project": self._config["jira"]["project"],
+            "project": self.jira_config["project"],
             "issuetype": {
-                "name": self._config["jira"]["mappings"]["artifacts"][artifact["type"]]
+                "name": self.jira_config["mappings"]["artifacts"][artifact["type"]]
             },
             "summary": f"{artifact['formattedId']} - {artifact['name']}",
             "description": f"{artifact['description']}\n{artifact['notes']}",
             "components": self._get_components(artifact),
             "comments": self._get_comments(artifact),
-            "priority": self._config["jira"]["mappings"]["priority"].get(
+            "priority": self.jira_config["mappings"]["priority"].get(
                 artifact["priority"]
             ),
+            "status": self._get_status(artifact),
             "labels": self._get_labels(artifact),
-            "reporter": {"name": artifact["createdBy"]["userName"]},
-            "assignee": {"name": artifact["owner"]["userName"]},
+            "reporter": {"id": reporter.accountId},
+            "assignee": {"id": assignee.accountId},
         }
 
         attachment_translator.add_attachments(issue)
@@ -88,14 +95,24 @@ class RallyArtifactTranslator(object):
 
     def _get_labels(self, artifact):
         labels = []
-        for field in self._config["jira"]["mappings"]["labels"]["fields"]:
+        for field in self.jira_config["mappings"]["labels"]["fields"]:
             value = artifact.get(field)
             if value:
                 if isinstance(value, list):
                     labels.extend(value)
+                elif isinstance(value, dict):
+                    labels.append(value.get("name"))
                 else:
                     labels.append(value)
         return labels
+
+    def _get_status(self, artifact):
+        if artifact["scheduleState"]:
+            return self.jira_config["mappings"]["schedulestate"][
+                artifact["scheduleState"]
+            ]
+        elif artifact["scheduleState"]:
+            return self.jira_config["mappings"]["state"][artifact["state"]]
 
 
 class JiraMigrator(object):
@@ -115,6 +132,7 @@ class JiraMigrator(object):
             print(f"JIRA SDK initialized in {after - before:.2f} seconds")
 
         self.rally_artifacts = self.load_rally_artifacts()
+        self.jira_user_cache = {}
 
     def load_rally_artifacts(self):
         rally_artifacts = []
@@ -149,7 +167,7 @@ class JiraMigrator(object):
         print("stop")
 
     def build_jira_mapping(self, artifact):
-        translator = RallyArtifactTranslator(self._config)
+        translator = RallyArtifactTranslator(self)
         mapping = {
             "parent": None,
             "issue": translator.create_issue(artifact),
@@ -168,7 +186,29 @@ class JiraMigrator(object):
         return mapping
 
     def _sdk_create_issue(self, field_list):
+        comments = field_list.pop("comments", [])
+        attachments = field_list.pop("attachments", [])
+
+        for empty_check in ("priority", "components"):
+            if not field_list[empty_check]:
+                del field_list[empty_check]
+
         new_issue = self.sdk.create_issue(fields=field_list)
-        if self.verbose:
-            print(f"jira.create_issue() => {new_issue}")
+
+        for attachment in attachments:
+            self.sdk.add_attachment(new_issue, attachment=attachment)
+
+        for comment in comments:
+            self.sdk.add_comment(new_issue, comment)
+
         return new_issue
+
+    def _search_for_jira_user(self, rally_username):
+        if rally_username in self.jira_user_cache:
+            return self.jira_user_cache[rally_username]
+
+        search_results = self.sdk.search_users(query=rally_username)
+        for user in search_results:
+            self.jira_user_cache[rally_username] = user
+
+        return user
