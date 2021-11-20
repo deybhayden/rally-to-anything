@@ -1,42 +1,11 @@
 import json
 import os
-import time
 
 import tqdm
 from jira import JIRA
 
 from ..rally.artifacts import RallyArtifact
 from ..rally.attachments import RallyAttachment
-
-
-class RallyAttachmentTranslator(object):
-    def __init__(self, artifact):
-        self.artifact = artifact
-        self.url_prefix = f"/slm/attachment/{artifact['objectId']}"
-
-    @property
-    def attachment_dirpath(self):
-        return os.path.join(
-            RallyAttachment.output_root,
-            "slm",
-            "webservice",
-            "v2.0",
-            "attachment",
-            str(self.artifact["objectId"]),
-        )
-
-    @property
-    def has_attachments(self):
-        return os.path.exists(self.attachment_dirpath)
-
-    def add_attachments(self, issue):
-        if self.has_attachments:
-            issue["attachments"] = []
-            for (dirpath, _, files) in os.walk(self.attachment_dirpath):
-                issue["attachments"].extend([os.path.join(dirpath, f) for f in files])
-
-    # def replace_attachments(self, text):
-    #     if text.find(self.url_prefix):
 
 
 class RallyArtifactTranslator(object):
@@ -133,15 +102,12 @@ class RallyArtifactTranslator(object):
         if rally_user:
             if rally_user["firstName"]:
                 name = f"{rally_user['firstName']} {rally_user['lastName']}"
-                active = True
             else:
                 name = f"{rally_user.get('name')}"
-                active = False
 
             if rally_user["emailAddress"] not in self.migrator.jira_users:
                 self.migrator.jira_users[rally_user["emailAddress"]] = {
                     "name": name,
-                    "active": active,
                     "email": rally_user["emailAddress"],
                     "fullname": name,
                 }
@@ -153,18 +119,6 @@ class JiraMigrator(object):
     def __init__(self, config, verbose):
         self._config = config
         self.verbose = verbose
-        before = time.time()
-        self.sdk = JIRA(
-            config["jira"]["sdk"]["server"],
-            basic_auth=(
-                config["jira"]["sdk"]["email"],
-                config["jira"]["sdk"]["api_token"],
-            ),
-        )
-        after = time.time()
-        if self.verbose:
-            print(f"JIRA SDK initialized in {after - before:.2f} seconds")
-
         self.rally_artifacts = self.load_rally_artifacts()
         self.jira_users = {}
 
@@ -217,8 +171,26 @@ class JiraMigrator(object):
                     project["issues"].append(child_issue)
 
         import_json["users"] = [
-            user.update({"email": email}) for (email, user) in self.jira_users
+            {"email": email, **user} for (email, user) in self.jira_users.items()
         ]
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
         with open(output_file, "w") as f:
             json.dump(import_json, f)
+
+    def upload_attachments(self):
+        for artifact in tqdm.tqdm(self.rally_artifacts[:10], "Artifacts"):
+            for attachment in artifact["attachments"]:
+                attachment_filepath = self._get_attachment_filepath(attachment)
+                if os.path.exists(attachment_filepath):
+                    attachment["filepath"] = attachment_filepath
+
+    def _get_attachment_filepath(self, attachment):
+        return os.path.join(
+            RallyAttachment.output_root,
+            "slm",
+            "webservice",
+            "v2.0",
+            "attachment",
+            attachment["objectId"],
+            attachment["name"],
+        )
