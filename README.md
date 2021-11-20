@@ -33,8 +33,8 @@ just looking for examples of how to do something similar.
   |Milestones|Milestones|Label|
   |Epic|Epic|Epic|
   |Feature|Epic|Story|
-  |User Story|Story|Task
-  |Defect|Story (type: :bug:)|Bug
+  |User Story|Story|Sub-Task|
+  |Defect|Story (type: :bug:)|Bug|
 
   Fields to be converted based upon configuration. Reasonable defaults
   will be defined in the repository as examples/for ease of use.
@@ -93,7 +93,8 @@ cp config.example.toml config.toml
 ```shell
 pipenv shell
 rally-to-anything dump-rally --config <config-location> --attachments
-rally-to-anything migrate-jira --config <config-location>
+rally-to-anything generate-jira-import-json --config <config-location>
+manage-jira empty-jira-project
 ```
 
 ### Tidbits
