@@ -6,6 +6,16 @@ import tqdm
 from jira import JIRA, JIRAError
 
 
+def get_jira_sdk(config):
+    return JIRA(
+        config["jira"]["sdk"]["server"],
+        basic_auth=(
+            config["jira"]["sdk"]["email"],
+            config["jira"]["sdk"]["api_token"],
+        ),
+    )
+
+
 @click.group()
 def cli():
     pass
@@ -26,13 +36,7 @@ def delete_suspended_users(dry_run, users_csv, config):
     users_reader = csv.DictReader(users_csv)
     suspended_users = [u for u in users_reader if u["User status"] == "Suspended"]
     click.echo(f"Deleting {len(suspended_users)} suspended users...")
-    jira = JIRA(
-        config["jira"]["sdk"]["server"],
-        basic_auth=(
-            config["jira"]["sdk"]["email"],
-            config["jira"]["sdk"]["api_token"],
-        ),
-    )
+    jira = get_jira_sdk(config)
     if dry_run:
         click.echo("Dry run - exiting...")
         return
@@ -47,17 +51,11 @@ def delete_suspended_users(dry_run, users_csv, config):
 @cli.command()
 @click.option("-d", "--dry-run", default=False, is_flag=True)
 @click.option("--config", type=click.File(), required=True, default="./config.toml")
-def empty_jira_project(dry_run, config):
+def empty_project(dry_run, config):
     config = toml.load(config)
     project = config["jira"]["project"]["key"]
     click.echo(f"Emptying Jira project '{project}'...")
-    jira = JIRA(
-        config["jira"]["sdk"]["server"],
-        basic_auth=(
-            config["jira"]["sdk"]["email"],
-            config["jira"]["sdk"]["api_token"],
-        ),
-    )
+    jira = get_jira_sdk(config)
     issues = jira.search_issues(f"project='{project}'")
 
     for issue in tqdm.tqdm(issues):

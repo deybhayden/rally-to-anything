@@ -94,7 +94,7 @@ cp config.example.toml config.toml
 pipenv shell
 rally-to-anything dump-rally --config <config-location> --attachments
 rally-to-anything generate-jira-import-json --config <config-location>
-manage-jira empty-jira-project
+manage-jira empty-project
 ```
 
 ### Tidbits
