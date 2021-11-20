@@ -10,7 +10,11 @@ from .attachments import RallyAttachment
 def _format_user(user):
     """Return a User Dictionary if the User is still a valid entity in Rally."""
     try:
-        return {"userName": user.UserName, "displayName": user.DisplayName}
+        return {
+            "emailAddress": user.EmailAddress,
+            "firstName": user.FirstName,
+            "lastName": user.LastName,
+        }
     except UnreferenceableOIDError:
         return {"name": user.Name}
     except UnreferenceableOIDError:
@@ -52,10 +56,12 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
             "owner": self._get_owner(rally_artifact),
             "planEstimate": rally_artifact._get_or_none("PlanEstimate"),
             "dragAndDropRank": rally_artifact._get_or_none("DragAndDropRank"),
+            "attachments": self._get_attachments(rally_artifact),
             "discussion": [
                 {
                     "user": _format_user(comment.User),
                     "text": comment.Text,
+                    "creationDate": comment.CreationDate,
                 }
                 for comment in rally_artifact.Discussion
             ],
@@ -73,6 +79,22 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
                 )
 
         return artifact
+
+    def _get_attachments(self, rally_artifact):
+        attachments = getattr(rally_artifact, "Attachments", [])
+        if attachments:
+            return [
+                {
+                    "name": attachment.Name,
+                    "user": _format_user(attachment.User),
+                    "creationDate": attachment.CreationDate,
+                    "objectId": attachment.ObjectID,
+                    "description": attachment.Description,
+                }
+                for attachment in attachments
+            ]
+        else:
+            return []
 
     def _get_blocker(self, rally_artifact):
         blocker = rally_artifact._get_or_none("Blocker")

@@ -2,10 +2,10 @@ import json
 import os
 import time
 
+import tqdm
 from jira import JIRA
 
 from ..rally.artifacts import RallyArtifact
-
 from ..rally.attachments import RallyAttachment
 
 
@@ -45,59 +45,59 @@ class RallyArtifactTranslator(object):
         self.jira_config = self.migrator._config["jira"]
 
     def create_issue(self, artifact):
-        attachment_translator = RallyAttachmentTranslator(artifact)
         issuetype = self.jira_config["mappings"]["artifacts"][artifact["type"]]
         priority = self.jira_config["mappings"]["priority"].get(artifact["priority"])
-        reporter = self.migrator._search_for_jira_user(
-            artifact["createdBy"]["userName"]
-        )
-        assignee = self.migrator._search_for_jira_user(artifact["owner"]["userName"])
         status = self._get_status(artifact)
 
         issue = {
-            "project": self.jira_config["project"],
-            "issuetype": {"name": issuetype},
+            "externalId": artifact["formattedId"],
+            "priority": priority,
+            "created": artifact["creationDate"],
+            "issueType": issuetype,
+            "status": status,
             "description": f"{artifact['description']}\n{artifact['notes']}",
+            "reporter": self._get_user(artifact["createdBy"]),
             "comments": self._get_comments(artifact),
             "labels": self._get_labels(artifact),
-            "summary": f"{artifact['formattedId']} - {artifact['name']}",
-            "reporter": {"id": reporter.accountId},
-            "assignee": {"id": assignee.accountId},
+            "summary": artifact["name"],
         }
 
-        if priority:
-            issue["priority"] = priority
+        if artifact["owner"]:
+            issue["assignee"] = self._get_user(artifact["owner"])
 
-        attachment_translator.add_attachments(issue)
+        if artifact["blocked"]:
+            issue["labels"].append("Blocked")
 
         if issuetype == "Epic":
-            # 'customfield_10005' == 'Epic Name')
-            # 'customfield_10006' == 'Epic Status')
-            issue.update(
+            issue["customFieldValues"] = [
                 {
-                    "customfield_10005": issue["summary"],
-                    "customfield_10006": {"value": self._get_status(artifact)},
-                    "status": status,
-                }
-            )
+                    "fieldName": "Epic Name",
+                    "fieldType": "com.pyxis.greenhopper.jira:gh-epic-label",
+                    "value": issue["summary"],
+                },
+                {
+                    "fieldName": "Epic Status",
+                    "fieldType": "com.pyxis.greenhopper.jira:gh-epic-status",
+                    "value": issue["status"],
+                },
+            ]
         else:
             issue.update(
                 {
                     "components": self._get_components(artifact),
-                    "status": status,
                 }
             )
 
         return issue
 
-    def _add_attachments(self, issue):
-        attachment_translator = RallyAttachmentTranslator(issue)
-        attachments = attachment_translator.find_attachments()
-        issue["attachments"] = attachments
-
     def _get_comments(self, artifact):
         return [
-            {"body": d["text"], "author": d["user"]} for d in artifact["discussion"]
+            {
+                "body": d["text"],
+                "author": self._get_user(d["user"]),
+                "created": d["creationDate"],
+            }
+            for d in artifact["discussion"]
         ]
 
     def _get_components(self, artifact):
@@ -129,6 +129,25 @@ class RallyArtifactTranslator(object):
         elif artifact["state"]:
             return self.jira_config["mappings"]["status"][artifact["state"]]
 
+    def _get_user(self, rally_user):
+        if rally_user:
+            if rally_user["firstName"]:
+                name = f"{rally_user['firstName']} {rally_user['lastName']}"
+                active = True
+            else:
+                name = f"{rally_user.get('name')}"
+                active = False
+
+            if rally_user["emailAddress"] not in self.migrator.jira_users:
+                self.migrator.jira_users[rally_user["emailAddress"]] = {
+                    "name": name,
+                    "active": active,
+                    "email": rally_user["emailAddress"],
+                    "fullname": name,
+                }
+
+            return name
+
 
 class JiraMigrator(object):
     def __init__(self, config, verbose):
@@ -147,7 +166,7 @@ class JiraMigrator(object):
             print(f"JIRA SDK initialized in {after - before:.2f} seconds")
 
         self.rally_artifacts = self.load_rally_artifacts()
-        self.jira_user_cache = {}
+        self.jira_users = {}
 
     def load_rally_artifacts(self):
         rally_artifacts = []
@@ -157,78 +176,49 @@ class JiraMigrator(object):
                     rally_artifacts.append(json.load(f))
         return rally_artifacts
 
-    def migrate_rally_artifact(self, artifact):
-        jira_mapping = self.build_jira_mapping(artifact)
-        epic_id = None
-        issue_keys = []
-        if jira_mapping["parent"]:
-            parent_issue = self._sdk_create_issue(jira_mapping["parent"])
-            if parent_issue.fields.issuetype == "Epic":
-                epic_id = parent_issue.id
-
-        for child in jira_mapping["children"]:
-            child_issue = self._sdk_create_issue(child)
-            issue_keys.append(child_issue.key)
-
-        if issue_keys:
-            jira_mapping["issue"]["issuelinks"] = issue_keys
-
-        issue = self._sdk_create_issue(jira_mapping["issue"])
-        issue_keys.append(issue.key)
-
-        if epic_id:
-            self.sdk.add_issues_to_epic(epic_id, issue_keys)
-
-        print("stop")
-
-    def build_jira_mapping(self, artifact):
+    def build_import_json(self, output_file):
         translator = RallyArtifactTranslator(self)
-        mapping = {
-            "parent": None,
-            "issue": translator.create_issue(artifact),
-            "children": [],
+        project = self._config["jira"]["project"]
+        project["issues"] = []
+        import_json = {
+            "users": [],
+            "links": [],
+            "projects": [project],
         }
 
-        if artifact["parent"]:
-            mapping["parent"] = translator.create_issue(artifact["parent"])
+        for artifact in tqdm.tqdm(self.rally_artifacts[:10], "Artifacts"):
+            issue = translator.create_issue(artifact)
 
-        for child in artifact.get("children", []):
-            mapping["children"].append(translator.create_issue(child))
+            if artifact["parent"]:
+                parent_issue = translator.create_issue(artifact["parent"])
+                if parent_issue["issueType"] == "Epic":
+                    issue["customFieldValues"] = [
+                        {
+                            "fieldName": "Epic Link",
+                            "fieldType": "com.pyxis.greenhopper.jira:gh-epic-link",
+                            "value": parent_issue["summary"],
+                        }
+                    ]
 
-        for child in artifact.get("stories", []):
-            mapping["children"].append(translator.create_issue(child))
+                project["issues"].append(parent_issue)
 
-        return mapping
+            project["issues"].append(issue)
 
-    def _sdk_create_issue(self, field_list):
-        comments = field_list.pop("comments", [])
-        attachments = field_list.pop("attachments", [])
-        status = field_list.pop("status", None)
+            for child_attrs in ("children", "stories"):
+                for child in artifact[child_attrs]:
+                    child_issue = translator.create_issue(child)
+                    import_json["links"].append(
+                        {
+                            "name": "sub-task-link",
+                            "sourceId": child_issue["externalId"],
+                            "destinationId": issue["externalId"],
+                        }
+                    )
+                    project["issues"].append(child_issue)
 
-        new_issue = self.sdk.create_issue(fields=field_list)
-        self._sdk_set_status(new_issue, status)
-
-        for attachment in attachments:
-            self.sdk.add_attachment(new_issue, attachment=attachment)
-
-        for comment in comments:
-            self.sdk.add_comment(new_issue, comment)
-
-        return new_issue
-
-    def _sdk_set_status(self, new_issue, status):
-        transitions = self.sdk.transitions(new_issue)
-        for transition in transitions:
-            if transition["name"] == status:
-                self.sdk.transition_issue(new_issue, transition["id"])
-                return
-
-    def _search_for_jira_user(self, rally_username):
-        if rally_username in self.jira_user_cache:
-            return self.jira_user_cache[rally_username]
-
-        search_results = self.sdk.search_users(query=rally_username)
-        for user in search_results:
-            self.jira_user_cache[rally_username] = user
-
-        return user
+        import_json["users"] = [
+            user.update({"email": email}) for (email, user) in self.jira_users
+        ]
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+        with open(output_file, "w") as f:
+            json.dump(import_json, f)

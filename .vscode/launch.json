@@ -37,11 +37,11 @@
       "console": "integratedTerminal"
     },
     {
-      "name": "migrate jira",
+      "name": "generate jira json",
       "type": "python",
       "request": "launch",
       "program": "${workspaceFolder}/bin/rally-to-anything",
-      "args": ["migrate-jira", "-v"],
+      "args": ["generate-jira-import-json", "-v"],
       "console": "integratedTerminal"
     }
   ]

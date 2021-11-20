@@ -32,7 +32,7 @@ key = "EXA"
 
 [jira.mappings.artifacts]
 Defect = "Bug"
-HierarchicalRequirement = "Task"
+HierarchicalRequirement = "Sub-task"
 "PortfolioItem" = "Story"
 "PortfolioItem/Epic" = "Epic"
 Task = "Sub-task"

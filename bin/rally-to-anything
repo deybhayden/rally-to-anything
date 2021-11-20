@@ -38,13 +38,26 @@ def dump_rally(verbose, clear_cache, attachments, config):
 
 @cli.command()
 @click.option("-v", "--verbose", default=False, is_flag=True)
+@click.option(
+    "--output-file",
+    required=True,
+    default="./rally-to-anything/jira/rally-to-jira.json",
+)
 @click.option("--config", type=click.File(), required=True, default="./config.toml")
-def migrate_jira(verbose, config):
+def generate_jira_import_json(verbose, output_file, config):
     config = toml.load(config)
-    click.echo("Migrating local Rally store to Jira Cloud...")
+    click.echo("Generating Rally To Jira JSON...")
     migrator = src.jira.JiraMigrator(config, verbose)
-    for artifact in tqdm.tqdm(migrator.rally_artifacts[:10], desc="Artifacts"):
-        migrator.migrate_rally_artifact(artifact)
+    migrator.build_import_json(output_file)
+    click.echo(
+        f"{output_file} generation complete. Upload to the JSON Importer of your Jira instance."
+        " More info on how to do so here: "
+        "https://confluence.atlassian.com/adminjiraserver/importing-data-from-json-938847609.html"
+    )
+    click.echo(
+        "After importing the issues, you'll want to upload Rally attachments using "
+        "the migrate-attachments-to-jira command."
+    )
 
 
 if __name__ == "__main__":
