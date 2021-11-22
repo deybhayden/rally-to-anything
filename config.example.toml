@@ -73,3 +73,9 @@ Accepted = "Accepted"
 
 [jira.mappings.labels]
 fields = ["iteration", "release", "milestones"]
+
+[aws]
+sso_profile = "jira-migration"
+region = "us-east-1"
+s3_endpoint_url = "https://s3.us-east-1.amazonaws.com"
+bucket_name = "jira-migration"

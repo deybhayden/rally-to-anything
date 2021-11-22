@@ -1,7 +1,9 @@
 import json
 import os
 
+import boto3
 import tqdm
+from botocore.client import Config
 from html2jira import html2jira
 
 from ..rally.artifacts import RallyArtifact
@@ -29,6 +31,7 @@ class RallyArtifactTranslator(object):
             "description": description,
             "reporter": self._get_user(artifact["createdBy"]),
             "comments": self._get_comments(artifact),
+            "attachments": self._get_attachments(artifact),
             "labels": self._get_labels(artifact),
             "summary": artifact["name"],
         }
@@ -63,6 +66,60 @@ class RallyArtifactTranslator(object):
             )
 
         return issue
+
+    def _get_attachments(self, artifact):
+        attachments = []
+        for attachment in tqdm.tqdm(artifact["attachments"], "Uploading Attachments"):
+            attachment_filepath = self._get_attachment_filepath(attachment)
+            if os.path.exists(attachment_filepath):
+                url = self._get_s3_presignedurl(attachment_filepath)
+                attachments.append(
+                    {
+                        "name": attachment["name"],
+                        "attacher": self._get_user(attachment["user"]),
+                        "created": attachment["creationDate"],
+                        "description": attachment["description"],
+                        "uri": url,
+                    }
+                )
+            else:
+                print(f"WARN: Filepath missing for attachment {attachment['objectId']}")
+
+        return attachments
+
+    def _get_attachment_filepath(self, attachment):
+        return os.path.join(
+            RallyAttachment.output_root,
+            "slm",
+            "webservice",
+            "v2.0",
+            "attachment",
+            str(attachment["objectId"]),
+            attachment["name"],
+        )
+
+    def _get_s3_presignedurl(self, attachment_filepath):
+        s3_key = self._upload_attachment_to_s3(attachment_filepath)
+        url = self.migrator.s3_client.generate_presigned_url(
+            ClientMethod="get_object",
+            Params={
+                "Bucket": self.migrator._config["aws"]["bucket_name"],
+                "Key": s3_key,
+            },
+            HttpMethod="Get",
+            ExpiresIn=600,  # Expires in 10 minutes
+        )
+        return url
+
+    def _upload_attachment_to_s3(self, attachment_filepath):
+        dirs, filename = os.path.split(attachment_filepath)
+        s3_key = os.path.join("attachments", os.path.basename(dirs), filename)
+        self.migrator.s3_client.upload_file(
+            attachment_filepath,
+            Bucket=self.migrator._config["aws"]["bucket_name"],
+            Key=s3_key,
+        )
+        return s3_key
 
     def _get_comments(self, artifact):
         return [
@@ -124,6 +181,13 @@ class JiraMigrator(object):
     def __init__(self, config, verbose):
         self._config = config
         self.verbose = verbose
+        boto3.setup_default_session(profile_name=config["aws"]["sso_profile"])
+        self.s3_client = boto3.client(
+            "s3",
+            region_name=config["aws"]["region"],
+            config=Config(signature_version="s3v4"),
+            endpoint_url=config["aws"]["s3_endpoint_url"],
+        )
         self.rally_artifacts = self.load_rally_artifacts()
         self.jira_users = {}
 
@@ -164,7 +228,7 @@ class JiraMigrator(object):
             project["issues"].append(issue)
 
             for child_attrs in ("children", "stories"):
-                for child in artifact[child_attrs]:
+                for child in artifact.get(child_attrs, []):
                     child_issue = translator.create_issue(child)
                     import_json["links"].append(
                         {
@@ -181,21 +245,3 @@ class JiraMigrator(object):
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
         with open(output_file, "w") as f:
             json.dump(import_json, f)
-
-    def upload_attachments(self):
-        for artifact in tqdm.tqdm(self.rally_artifacts[:10], "Artifacts"):
-            for attachment in artifact["attachments"]:
-                attachment_filepath = self._get_attachment_filepath(attachment)
-                if os.path.exists(attachment_filepath):
-                    attachment["filepath"] = attachment_filepath
-
-    def _get_attachment_filepath(self, attachment):
-        return os.path.join(
-            RallyAttachment.output_root,
-            "slm",
-            "webservice",
-            "v2.0",
-            "attachment",
-            attachment["objectId"],
-            attachment["name"],
-        )

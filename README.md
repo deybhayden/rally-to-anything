@@ -68,29 +68,42 @@ or just modify it for your own purposes in a fork. :smile:
 Assumptions:
 
 - You're using a Mac
-- You're using `pyenv`
-- You're using `pipenv`
+- You're using `pyenv` & `pipenv`
+- You have AWS SSO & an S3 bucket for migrating attachments
 
 #### pipenv
 
 From within your checkout:
 
-```shell
+```bash
 pyenv install 3.9.6
 pipenv install --python 3.9.6 . --editable .
 ```
 
 #### Complete configuration
 
-```shell
+```bash
 cp config.example.toml config.toml
 # edit config.toml
 # set api_key variables to live API key values and save
 ```
 
+Example AWS SSO profile:
+
+```ini
+[profile jira-migration]
+region = us-east-2
+output = json
+sso_start_url = https://d-30010391193.awsapps.com/start
+sso_region = us-east-1
+sso_account_id = 123456789123
+sso_role_name = PowerUser
+```
+
 #### Running
 
-```shell
+```bash
+aws sso login --profile jira-migration
 pipenv shell
 rally-to-anything dump-rally --config <config-location> --attachments
 rally-to-anything generate-jira-import-json --config <config-location>
