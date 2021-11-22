@@ -19,7 +19,6 @@ rally-to-anything = {editable = true, path = "."}
 
 [dev-packages]
 flake8 = "*"
-pudb = "*"
 black = "*"
 
 [requires]
