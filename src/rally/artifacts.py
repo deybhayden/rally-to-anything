@@ -56,6 +56,7 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
             "owner": self._get_owner(rally_artifact),
             "planEstimate": rally_artifact._get_or_none("PlanEstimate"),
             "dragAndDropRank": rally_artifact._get_or_none("DragAndDropRank"),
+            "environment": rally_artifact._get_or_none("Environment"),
             "attachments": self._get_attachments(rally_artifact),
             "discussion": [
                 {
@@ -71,12 +72,13 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
             artifact["parent"] = self._get_parent(rally_artifact)
 
         if recurse_children:
-            artifact["children"] = self._get_children(rally_artifact)
-
-            if hasattr(rally_artifact, "UserStories"):
-                artifact["stories"] = self._get_children(
-                    rally_artifact, attr="UserStories"
-                )
+            for (key, attr) in (
+                ("children", "Children"),
+                ("stories", "UserStories"),
+                ("tasks", "Tasks"),
+            ):
+                if hasattr(rally_artifact, attr):
+                    artifact[key] = self._get_children(rally_artifact, attr=attr)
 
         return artifact
 
