@@ -2,7 +2,7 @@ import json
 import os
 
 import tqdm
-from jira import JIRA
+from html2jira import html2jira
 
 from ..rally.artifacts import RallyArtifact
 from ..rally.attachments import RallyAttachment
@@ -18,6 +18,7 @@ class RallyArtifactTranslator(object):
         priority = self.jira_config["mappings"]["priority"].get(artifact["priority"])
         status = self._get_status(artifact)
         resolution = self.jira_config["mappings"]["resolution"].get(status)
+        description = html2jira(f"{artifact['description']}\n{artifact['notes']}")
 
         issue = {
             "externalId": artifact["formattedId"],
@@ -25,7 +26,7 @@ class RallyArtifactTranslator(object):
             "created": artifact["creationDate"],
             "issueType": issuetype,
             "status": status,
-            "description": f"{artifact['description']}\n{artifact['notes']}",
+            "description": description,
             "reporter": self._get_user(artifact["createdBy"]),
             "comments": self._get_comments(artifact),
             "labels": self._get_labels(artifact),
@@ -66,7 +67,7 @@ class RallyArtifactTranslator(object):
     def _get_comments(self, artifact):
         return [
             {
-                "body": d["text"],
+                "body": html2jira(d["text"]),
                 "author": self._get_user(d["user"]),
                 "created": d["creationDate"],
             }

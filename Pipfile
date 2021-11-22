@@ -16,6 +16,7 @@ urllib3 = "==1.26.3"
 tqdm = "*"
 jira = "*"
 rally-to-anything = {editable = true, path = "."}
+html2jira = {git = "https://github.com/Qazzian/html2jira.git"}
 
 [dev-packages]
 flake8 = "*"

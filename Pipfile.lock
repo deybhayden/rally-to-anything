@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "d1eabfeaa96d950c9cb32717327944457226fccb96e9a67f05b8f3706cff7ada"
+            "sha256": "435cf7946004d3b2fee5fa29a1fdf2b9bd5d63f73ba3a3d3130daa2b993b8d4b"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -47,6 +47,10 @@
             ],
             "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3, 3.4'",
             "version": "==0.7.1"
+        },
+        "html2jira": {
+            "git": "https://github.com/Qazzian/html2jira.git",
+            "ref": "edcfc114bf5f204d1b78bd7f3e2b496fe7db0554"
         },
         "idna": {
             "hashes": [
