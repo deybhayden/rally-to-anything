@@ -17,6 +17,7 @@ class RallyArtifactTranslator(object):
         issuetype = self.jira_config["mappings"]["artifacts"][artifact["type"]]
         priority = self.jira_config["mappings"]["priority"].get(artifact["priority"])
         status = self._get_status(artifact)
+        resolution = self.jira_config["mappings"]["resolution"].get(status)
 
         issue = {
             "externalId": artifact["formattedId"],
@@ -30,6 +31,9 @@ class RallyArtifactTranslator(object):
             "labels": self._get_labels(artifact),
             "summary": artifact["name"],
         }
+
+        if resolution:
+            issue["resolution"] = resolution
 
         if artifact["owner"]:
             issue["assignee"] = self._get_user(artifact["owner"])
