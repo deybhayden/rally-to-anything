@@ -3,21 +3,22 @@ import os
 
 
 class RallyAttachment(object):
-
-    server = "https://rally1.rallydev.com/"
-    output_root = os.path.abspath(
-        os.path.join(".", "rally-to-anything", "rally", "assets")
-    )
-
-    def __init__(self, attachment):
+    def __init__(self, config, attachment):
+        self._config = config
         self._attachment = attachment
 
     def __getattr__(self, attribute):
         return getattr(self._attachment, attribute)
 
     @property
+    def output_root(self):
+        return os.path.join(self._config["rally"]["output_root"], "assets")
+
+    @property
     def relative_path(self):
-        return self._ref.replace(self.server, "")
+        return self._ref.replace(
+            f"https://{self._config['rally']['sdk']['server']}/", ""
+        )
 
     @property
     def disk_path(self):

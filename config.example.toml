@@ -22,6 +22,9 @@ threads = 4
 api_key = "<API_KEY>"
 
 [jira]
+[jira.json]
+filepath = "./rally-to-anything/jira/rally-to-jira.json"
+
 [jira.sdk]
 email = "john@example.com"
 api_token = "<API_KEY>"

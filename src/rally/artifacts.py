@@ -113,7 +113,9 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
         children = rally_artifact._get_or_none(attr)
         if children:
             for child in children:
-                child_artifact = RallyArtifact(child)
+                child_artifact = RallyArtifact(
+                    rally_artifact._config, child, rally_artifact._artifact_directory
+                )
                 encoded_children.append(
                     self._encode_rally_artifact_as_json(
                         child_artifact, recurse_parent=False
@@ -154,7 +156,9 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
     def _get_parent(self, rally_artifact):
         parent = rally_artifact._get_or_none("Parent")
         if parent:
-            parent_artifact = RallyArtifact(parent)
+            parent_artifact = RallyArtifact(
+                rally_artifact._config, parent, rally_artifact._artifact_directory
+            )
             return self._encode_rally_artifact_as_json(
                 parent_artifact, recurse_children=False
             )
@@ -181,18 +185,10 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
 
 
 class RallyArtifact(object):
-
-    output_root = os.path.join(".", "rally-to-anything", "rally", "artifacts")
-
-    def __init__(
-        self,
-        artifact,
-        artifact_distinction=None,
-    ):
+    def __init__(self, config, artifact, artifact_directory):
+        self._config = config
         self._artifact = artifact
-        self._artifact_distinction = (
-            artifact_distinction if artifact_distinction else self._guess_distinction()
-        )
+        self._artifact_directory = artifact_directory
 
     def __getattr__(self, attribute):
         return getattr(self._artifact, attribute)
@@ -200,21 +196,14 @@ class RallyArtifact(object):
     def _get_or_none(self, attr):
         return getattr(self._artifact, attr, None)
 
-    def _guess_distinction(self):
-        distnction = (
-            (
-                self.PortfolioItemTypeName
-                if hasattr(self, "PortfolioItemTypeName")
-                else self._type
-            ).replace("PortfolioItem/", "")
-            + "s"
-        ).lower()
-        return distnction
+    @property
+    def output_root(self):
+        return os.path.join(self._config["rally"]["output_root"], "artifacts")
 
     @property
     def disk_path(self):
         return os.path.join(
-            self.output_root, self._artifact_distinction, f"{self.ObjectID}.json"
+            self.output_root, self._artifact_directory, f"{self.ObjectID}.json"
         )
 
     @property
@@ -236,5 +225,5 @@ class RallyArtifact(object):
 
     def attachments(self):
         for attachment in self.Attachments:
-            attachment = RallyAttachment(attachment)
+            attachment = RallyAttachment(self._config, attachment)
             yield attachment

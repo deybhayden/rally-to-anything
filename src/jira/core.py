@@ -34,6 +34,7 @@ class RallyArtifactTranslator(object):
             "attachments": self._get_attachments(artifact),
             "labels": self._get_labels(artifact),
             "summary": artifact["name"],
+            "environment": artifact["environment"],
         }
 
         if resolution:
@@ -199,7 +200,7 @@ class JiraMigrator(object):
                     rally_artifacts.append(json.load(f))
         return rally_artifacts
 
-    def build_import_json(self, output_file):
+    def build_import_json(self):
         translator = RallyArtifactTranslator(self)
         project = self._config["jira"]["project"]
         project["issues"] = []
@@ -227,7 +228,7 @@ class JiraMigrator(object):
 
             project["issues"].append(issue)
 
-            for child_attrs in ("children", "stories"):
+            for child_attrs in ("children", "stories", "tasks"):
                 for child in artifact.get(child_attrs, []):
                     child_issue = translator.create_issue(child)
                     import_json["links"].append(
@@ -242,6 +243,8 @@ class JiraMigrator(object):
         import_json["users"] = [
             {"email": email, **user} for (email, user) in self.jira_users.items()
         ]
+
+        output_file = self._config["jira"]["json"]["filepath"]
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
         with open(output_file, "w") as f:
             json.dump(import_json, f)

@@ -38,19 +38,14 @@ def dump_rally(verbose, clear_cache, attachments, config):
 
 @cli.command()
 @click.option("-v", "--verbose", default=False, is_flag=True)
-@click.option(
-    "--output-file",
-    required=True,
-    default="./rally-to-anything/jira/rally-to-jira.json",
-)
 @click.option("--config", type=click.File(), required=True, default="./config.toml")
-def generate_jira_import_json(verbose, output_file, config):
+def generate_jira_import_json(verbose, config):
     config = toml.load(config)
     click.echo("Generating Rally To Jira JSON...")
     migrator = src.jira.JiraMigrator(config, verbose)
-    migrator.build_import_json(output_file)
+    migrator.build_import_json()
     click.echo(
-        f"{output_file} generation complete. Upload to the JSON Importer of your Jira instance."
+        f"{config['jira']['json']['filepath']} generation complete. Upload to the JSON Importer of your Jira instance."
         " More info on how to do so here: "
         "https://confluence.atlassian.com/adminjiraserver/importing-data-from-json-938847609.html"
     )
