@@ -196,14 +196,16 @@ class RallyArtifact(object):
     def _get_or_none(self, attr):
         return getattr(self._artifact, attr, None)
 
-    @property
-    def output_root(self):
-        return os.path.join(self._config["rally"]["output_root"], "artifacts")
+    @staticmethod
+    def output_root(config):
+        return os.path.join(config["rally"]["output_root"], "artifacts")
 
     @property
     def disk_path(self):
         return os.path.join(
-            self.output_root, self._artifact_directory, f"{self.ObjectID}.json"
+            self.output_root(self._config),
+            self._artifact_directory,
+            f"{self.ObjectID}.json",
         )
 
     @property

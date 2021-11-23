@@ -10,9 +10,9 @@ class RallyAttachment(object):
     def __getattr__(self, attribute):
         return getattr(self._attachment, attribute)
 
-    @property
-    def output_root(self):
-        return os.path.join(self._config["rally"]["output_root"], "assets")
+    @staticmethod
+    def output_root(config):
+        return os.path.join(config["rally"]["output_root"], "assets")
 
     @property
     def relative_path(self):
@@ -22,7 +22,9 @@ class RallyAttachment(object):
 
     @property
     def disk_path(self):
-        return os.path.join(self.output_root, self.relative_path, self.Name)
+        return os.path.join(
+            self.output_root(self._config), self.relative_path, self.Name
+        )
 
     @property
     def is_on_disk(self):
