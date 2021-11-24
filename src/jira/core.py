@@ -168,7 +168,11 @@ class RallyArtifactTranslator(object):
             value = artifact.get(field)
             if value:
                 if isinstance(value, list):
-                    labels.extend(value)
+                    names = [v.get("name") for v in value if isinstance(v, dict)]
+                    if names:
+                        labels.extend(names)
+                    else:
+                        labels.extend(value)
                 elif isinstance(value, dict):
                     labels.append(value.get("name"))
                 else:
