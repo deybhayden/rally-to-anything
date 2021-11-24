@@ -56,7 +56,8 @@ def empty_project(dry_run, config):
     project = config["jira"]["project"]["key"]
     click.echo(f"Emptying Jira project '{project}'...")
     jira = get_jira_sdk(config)
-    issues = jira.search_issues(f"project='{project}'")
+    # set maxResults to False to get all issues
+    issues = jira.search_issues(f"project='{project}'", maxResults=False)
 
     for issue in tqdm.tqdm(issues):
         if dry_run:
