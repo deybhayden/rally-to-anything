@@ -43,6 +43,14 @@
       "program": "${workspaceFolder}/bin/rally-to-anything",
       "args": ["generate-jira-import-json", "-v"],
       "console": "integratedTerminal"
+    },
+    {
+      "name": "generate jira json - skip uploads",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/bin/rally-to-anything",
+      "args": ["generate-jira-import-json", "-v", "-s"],
+      "console": "integratedTerminal"
     }
   ]
 }

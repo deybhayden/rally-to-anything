@@ -2,38 +2,28 @@ import json
 import os
 
 import boto3
-import html2jira
 import tqdm
 from botocore.client import Config
 
-from .links import RallyLinkTranslator
+from .text import RallyTextTranslator
 from src.rally.artifacts import RallyArtifact
 from src.rally.attachments import RallyAttachment
 
 
-def rally_html_to_jira(html):
-    # bodywidth set to 0 so no wrapping
-    h = html2jira.HTML2Jira(bodywidth=0)
-    # Reduce the amount of inline links/images in text & comments
-    h.ignore_links = True
-    h.ignore_images = True
-    plaintext = h.handle(html).strip()
-    return plaintext
-
-
 class RallyArtifactTranslator(object):
-    def __init__(self, migrator):
+    def __init__(self, migrator, skip_attachment_upload=False):
         self.migrator = migrator
+        self.skip_attachment_upload = skip_attachment_upload
         self._config = self.migrator._config
         self.mappings = self._config["jira"]["mappings"]
-        self.link_translator = RallyLinkTranslator(self._config)
+        self.text_translator = RallyTextTranslator(self._config)
 
     def create_issue(self, artifact):
         issuetype = self.mappings["artifacts"][artifact["type"]]
         priority = self.mappings["priority"].get(artifact["priority"])
         status = self._get_status(artifact)
         resolution = self.mappings["resolution"].get(status)
-        description = rally_html_to_jira(
+        description, zendesk_tickets = self.text_translator.rally_html_to_jira(
             f"{artifact['description']}\n{artifact['notes']}"
         )
 
@@ -45,11 +35,12 @@ class RallyArtifactTranslator(object):
             "status": status,
             "description": description,
             "reporter": self._get_user(artifact["createdBy"]),
-            "comments": self._get_comments(artifact),
+            "comments": self._get_comments(artifact, zendesk_tickets),
             "attachments": self._get_attachments(artifact),
             "labels": self._get_labels(artifact),
             "summary": artifact["name"],
             "environment": artifact["environment"],
+            "customFieldValues": [],
         }
 
         if resolution:
@@ -61,34 +52,31 @@ class RallyArtifactTranslator(object):
         if artifact["blocked"]:
             issue["labels"].append("Blocked")
 
-        zendesk_tickets = self.link_translator.find_zendesk_tickets(issue)
-
         if issuetype == "Epic":
-            issue["customFieldValues"] = [
-                {
-                    "fieldName": "Epic Name",
-                    "fieldType": "com.pyxis.greenhopper.jira:gh-epic-label",
-                    "value": issue["summary"],
-                },
-                {
-                    "fieldName": "Epic Status",
-                    "fieldType": "com.pyxis.greenhopper.jira:gh-epic-status",
-                    "value": issue["status"],
-                },
-            ]
-        else:
-            issue.update(
-                {
-                    "components": self._get_components(artifact),
-                    "customFieldValues": [
-                        {
-                            "fieldName": "Zendesk Tickets",
-                            "fieldType": "com.atlassian.jira.plugin.system.customfieldtypes:textfield",
-                            "value": ",".join(zendesk_tickets),
-                        }
-                    ],
-                }
+            issue["customFieldValues"].extend(
+                [
+                    {
+                        "fieldName": "Epic Name",
+                        "fieldType": "com.pyxis.greenhopper.jira:gh-epic-label",
+                        "value": issue["summary"],
+                    },
+                    {
+                        "fieldName": "Epic Status",
+                        "fieldType": "com.pyxis.greenhopper.jira:gh-epic-status",
+                        "value": issue["status"],
+                    },
+                ]
             )
+        else:
+            issue["components"] = self._get_components(artifact)
+            if zendesk_tickets:
+                issue["customFieldValues"].append(
+                    {
+                        "fieldName": "Zendesk Tickets",
+                        "fieldType": "com.atlassian.jira.plugin.system.customfieldtypes:textfield",
+                        "value": ",".join(zendesk_tickets),
+                    }
+                )
 
         return issue
 
@@ -139,22 +127,30 @@ class RallyArtifactTranslator(object):
     def _upload_attachment_to_s3(self, attachment_filepath):
         dirs, filename = os.path.split(attachment_filepath)
         s3_key = os.path.join("attachments", os.path.basename(dirs), filename)
-        self.migrator.s3_client.upload_file(
-            attachment_filepath,
-            Bucket=self._config["aws"]["bucket_name"],
-            Key=s3_key,
-        )
+        if not self.skip_attachment_upload:
+            self.migrator.s3_client.upload_file(
+                attachment_filepath,
+                Bucket=self._config["aws"]["bucket_name"],
+                Key=s3_key,
+            )
         return s3_key
 
-    def _get_comments(self, artifact):
-        return [
-            {
-                "body": rally_html_to_jira(d["text"]),
-                "author": self._get_user(d["user"]),
-                "created": d["creationDate"],
-            }
-            for d in artifact["discussion"]
-        ]
+    def _get_comments(self, artifact, zendesk_tickets):
+        comments = []
+        for discussion in artifact["discussion"]:
+            if discussion["text"]:
+                body, new_tickets = self.text_translator.rally_html_to_jira(
+                    discussion["text"]
+                )
+                zendesk_tickets.extend(new_tickets)
+                comments.append(
+                    {
+                        "body": body,
+                        "author": self._get_user(discussion["user"]),
+                        "created": discussion["creationDate"],
+                    }
+                )
+        return comments
 
     def _get_components(self, artifact):
         components = []
@@ -225,8 +221,8 @@ class JiraMigrator(object):
                     rally_artifacts.append(json.load(f))
         return rally_artifacts
 
-    def build_import_json(self):
-        translator = RallyArtifactTranslator(self)
+    def build_import_json(self, skip_attachment_upload=False):
+        translator = RallyArtifactTranslator(self, skip_attachment_upload)
         project = self._config["jira"]["project"].copy()
         project["issues"] = []
         import_json = {
@@ -239,15 +235,17 @@ class JiraMigrator(object):
             issue = translator.create_issue(artifact)
 
             if artifact["parent"]:
-                parent_issue = translator.create_issue(artifact["parent"])
+                parent_issue = self._find_or_create_parent_issue(
+                    project, translator, artifact
+                )
                 if parent_issue["issueType"] == "Epic":
-                    issue["customFieldValues"] = [
+                    issue["customFieldValues"].append(
                         {
                             "fieldName": "Epic Link",
                             "fieldType": "com.pyxis.greenhopper.jira:gh-epic-link",
                             "value": parent_issue["summary"],
                         }
-                    ]
+                    )
 
                 project["issues"].append(parent_issue)
 
@@ -268,7 +266,20 @@ class JiraMigrator(object):
         import_json["users"] = [
             {"email": email, **user} for (email, user) in self.jira_users.items()
         ]
+        self._write_json_file(import_json)
 
+    def _find_or_create_parent_issue(self, project, translator, artifact):
+        matches = [
+            i
+            for i in project["issues"]
+            if artifact["parent"]["formattedId"] == i["externalId"]
+        ]
+        if matches:
+            return matches[0]
+        else:
+            return translator.create_issue(artifact["parent"])
+
+    def _write_json_file(self, import_json):
         output_file = self._config["jira"]["json"]["filepath"]
         os.makedirs(os.path.dirname(output_file), exist_ok=True)
         with open(output_file, "w") as f:
