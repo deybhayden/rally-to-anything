@@ -21,7 +21,7 @@ class RallyArtifactTranslator(object):
     def create_issue(self, artifact):
         issuetype = self.mappings["artifacts"][artifact["type"]]
         priority = self.mappings["priority"].get(artifact["priority"])
-        status = self._get_status(artifact)
+        status = self._get_status(issuetype, artifact)
         resolution = self.mappings["resolution"].get(status)
         description, zendesk_tickets = self.text_translator.rally_html_to_jira(
             f"{artifact['description']}\n{artifact['notes']}"
@@ -179,11 +179,16 @@ class RallyArtifactTranslator(object):
                     labels.append(value)
         return labels
 
-    def _get_status(self, artifact):
-        if artifact["scheduleState"]:
-            return self.mappings["status"][artifact["scheduleState"]]
-        elif artifact["state"]:
-            return self.mappings["status"][artifact["state"]]
+    def _get_status(self, issuetype, artifact):
+        if issuetype == "Epic" and "epic" in self.mappings["status"]:
+            return self.mappings["status"]["epic"][artifact["state"]]
+        elif issuetype == "Bug" and "bug" in self.mappings["status"]:
+            return self.mappings["status"]["bug"][artifact["state"]]
+        else:
+            if artifact["scheduleState"]:
+                return self.mappings["status"]["issue"][artifact["scheduleState"]]
+            if artifact["state"]:
+                return self.mappings["status"]["issue"][artifact["state"]]
 
     def _get_user(self, rally_user):
         if rally_user:
