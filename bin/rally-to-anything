@@ -24,16 +24,7 @@ def dump_rally(verbose, clear_cache, attachments, config):
         click.echo("Clearing local Rally artifact cache...")
 
     for artifact in tqdm.tqdm(rally.artifacts, desc="Artifacts"):
-        if attachments:
-            for attachment in tqdm.tqdm(
-                artifact.attachments(),
-                desc="Attachments",
-                total=artifact.number_of_attachments,
-                disable=artifact.number_of_attachments == 0,
-            ):
-                attachment.cache_to_disk(force=clear_cache)
-
-        artifact.cache_to_disk(force=clear_cache)
+        artifact.cache_to_disk(download_attachments=attachments, force=clear_cache)
 
 
 @cli.command()

@@ -2,6 +2,7 @@ import functools
 import json
 import os
 
+import tqdm
 from pyral.entity import UnreferenceableOIDError
 
 from .attachments import RallyAttachment
@@ -22,6 +23,11 @@ def _format_user(user):
 
 
 class RallyArtifactJSONSerializer(json.JSONEncoder):
+    def __init__(self, *args, **kwargs):
+        self.download_attachments = kwargs.pop("download_attachments", False)
+        self.force_cache = kwargs.pop("force_cache", False)
+        super(RallyArtifactJSONSerializer, self).__init__(*args, **kwargs)
+
     def default(self, obj):
         json_encoder = functools.partial(json.JSONEncoder.default, self)
         if isinstance(obj, RallyArtifact):
@@ -83,9 +89,17 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
         return artifact
 
     def _get_attachments(self, rally_artifact):
-        attachments = getattr(rally_artifact, "Attachments", [])
-        if attachments:
-            return [
+        json_attachments = []
+        for attachment in tqdm.tqdm(
+            rally_artifact.attachments(),
+            desc="Attachments",
+            total=rally_artifact.number_of_attachments,
+            disable=rally_artifact.number_of_attachments == 0,
+        ):
+            if self.download_attachments:
+                attachment.cache_to_disk(self.force_cache)
+
+            json_attachments.append(
                 {
                     "name": attachment.Name,
                     "user": _format_user(attachment.User),
@@ -93,10 +107,8 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
                     "objectId": attachment.ObjectID,
                     "description": attachment.Description,
                 }
-                for attachment in attachments
-            ]
-        else:
-            return []
+            )
+        return json_attachments
 
     def _get_blocker(self, rally_artifact):
         blocker = rally_artifact._get_or_none("Blocker")
@@ -215,11 +227,17 @@ class RallyArtifact(object):
     def json(self):
         return json.dumps(self, cls=RallyArtifactJSONSerializer)
 
-    def cache_to_disk(self, force=False):
+    def cache_to_disk(self, download_attachments=False, force=False):
         if not self.is_on_disk or force:
             os.makedirs(os.path.dirname(self.disk_path), exist_ok=True)
             with open(self.disk_path, "w") as f:
-                return json.dump(self, f, cls=RallyArtifactJSONSerializer)
+                return json.dump(
+                    self,
+                    f,
+                    cls=RallyArtifactJSONSerializer,
+                    download_attachments=download_attachments,
+                    force_cache=force,
+                )
 
     @property
     def number_of_attachments(self):
