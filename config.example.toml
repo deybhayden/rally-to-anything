@@ -82,6 +82,7 @@ sso_profile = "jira-migration"
 region = "us-east-1"
 s3_endpoint_url = "https://s3.us-east-1.amazonaws.com"
 bucket_name = "jira-migration"
+s3_presign_expires = 600
 
 [zendesk]
 [zendesk.sdk]

@@ -120,7 +120,7 @@ class RallyArtifactTranslator(object):
                 "Key": s3_key,
             },
             HttpMethod="Get",
-            ExpiresIn=600,  # Expires in 10 minutes
+            ExpiresIn=self._config["aws"]["s3_presign_expires"],
         )
         return url
 
