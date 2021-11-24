@@ -138,10 +138,10 @@ class RallyArtifactTranslator(object):
     def _get_comments(self, artifact, zendesk_tickets):
         comments = []
         for discussion in artifact["discussion"]:
-            if discussion["text"]:
-                body, new_tickets = self.text_translator.rally_html_to_jira(
-                    discussion["text"]
-                )
+            body, new_tickets = self.text_translator.rally_html_to_jira(
+                discussion["text"]
+            )
+            if body:
                 zendesk_tickets.extend(new_tickets)
                 comments.append(
                     {
@@ -247,8 +247,6 @@ class JiraMigrator(object):
                         }
                     )
 
-                project["issues"].append(parent_issue)
-
             project["issues"].append(issue)
 
             for child_attrs in ("children", "stories", "tasks"):
@@ -277,7 +275,9 @@ class JiraMigrator(object):
         if matches:
             return matches[0]
         else:
-            return translator.create_issue(artifact["parent"])
+            parent_issue = translator.create_issue(artifact["parent"])
+            project["issues"].append(parent_issue)
+            return parent_issue
 
     def _write_json_file(self, import_json):
         output_file = self._config["jira"]["json"]["filepath"]
