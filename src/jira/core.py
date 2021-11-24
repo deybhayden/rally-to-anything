@@ -235,7 +235,7 @@ class JiraMigrator(object):
             "projects": [project],
         }
 
-        for artifact in tqdm.tqdm(self.rally_artifacts[:10], "Artifacts"):
+        for artifact in tqdm.tqdm(self.rally_artifacts, "Artifacts"):
             issue = translator.create_issue(artifact)
 
             if artifact["parent"]:
