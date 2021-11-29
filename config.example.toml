@@ -33,10 +33,11 @@ server = "https://example.atlassian.net"
 [jira.project]
 key = "EXA"
 
+
 [jira.mappings.artifacts]
 Defect = "Bug"
 HierarchicalRequirement = "Sub-task"
-"PortfolioItem" = "Story"
+PortfolioItem = "Story"
 "PortfolioItem/Epic" = "Epic"
 Task = "Sub-task"
 
@@ -49,26 +50,26 @@ Low = "Lowest"
 
 [jira.mappings.status.issue]
 Backlog = "Backlog"
+Review = "Backlog"
 Defined = "Defined"
-"Discovering" = "To Do"
+Discovering = "To Do"
 "To Do" = "To Do"
-"Developing" = "In Progress"
+Developing = "In Progress"
 "In-Progress" = "In Progress"
 "In Progress" = "In Progress"
-"Review" = "In Progress"
-"Measuring" = "In Progress"
+Measuring = "In Progress"
 Complete = "Complete"
 Completed = "Complete"
 Accepted = "Accepted"
 "Done/Merged" = "Done"
-"Done" = "Done"
-"Removed" = "Removed"
+Done = "Done"
+Removed = "Removed"
 
 [jira.mappings.status.epic]
-"Discovering" = "To Do"
-"Developing" = "In Progress"
-"Measuring" = "In Progress"
-"Done" = "Done"
+Discovering = "To Do"
+Developing = "In Progress"
+Measuring = "In Progress"
+Done = "Done"
 
 [jira.mappings.status.bug]
 Submitted = "Submitted"
@@ -76,7 +77,7 @@ Open = "Open"
 Closed = "Closed"
 "In Progress" = "In Progress"
 "Won't Fix" = "Won't Fix"
-"Duplicate" = "Duplicate"
+Duplicate = "Duplicate"
 "Not a Defect" = "Rejected"
 
 [jira.mappings.resolution]
