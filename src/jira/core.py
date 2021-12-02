@@ -261,13 +261,9 @@ class JiraMigrator(object):
             for child_attrs in ("children", "stories", "tasks"):
                 for child in artifact.get(child_attrs, []):
                     child_issue = translator.create_issue(child)
-                    import_json["links"].append(
-                        {
-                            "name": "sub-task-link",
-                            "sourceId": child_issue["externalId"],
-                            "destinationId": issue["externalId"],
-                        }
-                    )
+                    issue_link = self._get_issue_link(issue, child_issue)
+                    if issue_link:
+                        import_json["links"].append(issue_link)
                     project["issues"].append(child_issue)
 
         import_json["users"] = [
@@ -287,6 +283,24 @@ class JiraMigrator(object):
             parent_issue = translator.create_issue(artifact["parent"])
             project["issues"].append(parent_issue)
             return parent_issue
+
+    def _get_issue_link(self, issue, child_issue):
+        link_type = self._config["jira"]["mappings"]["issuelinking"].get(
+            child_issue["issueType"], "sub-task-link"
+        )
+
+        if link_type == "sub-task-link":
+            return {
+                "name": link_type,
+                "sourceId": child_issue["externalId"],
+                "destinationId": issue["externalId"],
+            }
+        elif link_type == "Dependent":
+            return {
+                "name": link_type,
+                "sourceId": issue["externalId"],
+                "destinationId": child_issue["externalId"],
+            }
 
     def _write_json_file(self, import_json):
         output_file = self._config["jira"]["json"]["filepath"]
