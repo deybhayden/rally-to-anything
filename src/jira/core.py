@@ -34,6 +34,7 @@ class RallyArtifactTranslator(object):
             "issueType": issuetype,
             "status": status,
             "description": description,
+            "components": self._get_components(artifact),
             "reporter": self._get_user(artifact["createdBy"]),
             "comments": self._get_comments(artifact, zendesk_tickets),
             "attachments": self._get_attachments(artifact),
@@ -52,31 +53,7 @@ class RallyArtifactTranslator(object):
         if artifact["blocked"]:
             issue["labels"].append("Blocked")
 
-        if issuetype == "Epic":
-            issue["customFieldValues"].extend(
-                [
-                    {
-                        "fieldName": "Epic Name",
-                        "fieldType": "com.pyxis.greenhopper.jira:gh-epic-label",
-                        "value": issue["summary"],
-                    },
-                    {
-                        "fieldName": "Epic Status",
-                        "fieldType": "com.pyxis.greenhopper.jira:gh-epic-status",
-                        "value": issue["status"],
-                    },
-                ]
-            )
-        else:
-            issue["components"] = self._get_components(artifact)
-            if zendesk_tickets:
-                issue["customFieldValues"].append(
-                    {
-                        "fieldName": "Zendesk Ticket IDs",
-                        "fieldType": "com.atlassian.jira.plugin.system.customfieldtypes:textarea",
-                        "value": ",".join(zendesk_tickets),
-                    }
-                )
+        self._set_custom_fields(issue, artifact, zendesk_tickets)
 
         return issue
 
@@ -205,6 +182,43 @@ class RallyArtifactTranslator(object):
                 }
 
             return name
+
+    def _set_custom_fields(self, issue, artifact, zendesk_tickets):
+        issue["customFieldValues"] = []
+
+        if artifact["planEstimate"]:
+            issue["customFieldValues"].append(
+                {
+                    "fieldName": "Story Points",
+                    "fieldType": "com.atlassian.jira.plugin.system.customfieldtypes:float",
+                    "value": artifact["planEstimate"],
+                }
+            )
+
+        if zendesk_tickets:
+            issue["customFieldValues"].append(
+                {
+                    "fieldName": "Zendesk Ticket IDs",
+                    "fieldType": "com.atlassian.jira.plugin.system.customfieldtypes:textarea",
+                    "value": ",".join(zendesk_tickets),
+                }
+            )
+
+        if issue["issueType"] == "Epic":
+            issue["customFieldValues"].extend(
+                [
+                    {
+                        "fieldName": "Epic Name",
+                        "fieldType": "com.pyxis.greenhopper.jira:gh-epic-label",
+                        "value": issue["summary"],
+                    },
+                    {
+                        "fieldName": "Epic Status",
+                        "fieldType": "com.pyxis.greenhopper.jira:gh-epic-status",
+                        "value": issue["status"],
+                    },
+                ]
+            )
 
 
 class JiraMigrator(object):
