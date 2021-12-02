@@ -23,9 +23,7 @@ class RallyArtifactTranslator(object):
         priority = self.mappings["priority"].get(artifact["priority"])
         status = self._get_status(issuetype, artifact)
         resolution = self.mappings["resolution"].get(status)
-        description, zendesk_tickets = self.text_translator.rally_html_to_jira(
-            f"{artifact['description']}\n{artifact['notes']}"
-        )
+        description, zendesk_tickets = self._get_description_and_tickets(artifact)
 
         issue = {
             "externalId": artifact["formattedId"],
@@ -56,6 +54,24 @@ class RallyArtifactTranslator(object):
         self._set_custom_fields(issue, artifact, zendesk_tickets)
 
         return issue
+
+    def _get_description_and_tickets(self, artifact):
+        description = f"{artifact['description']}\n{artifact['notes']}"
+
+        if "defectDetails" in artifact:
+            details = artifact["defectDetails"]
+            if details["expectedResults"]:
+                description += f"\n*Expected Results*\n{details['expectedResults']}"
+            if details["actualResults"]:
+                description += f"\n*Actual Results*\n{details['actualResults']}"
+            if details["rootCause"]:
+                description += f"\n*Root Cause*\n{details['rootCause']}"
+            if details["siteURL"]:
+                description += f"\n*Site URL*\n{details['siteURL']}"
+            if details["stepsToReproduce"]:
+                description += f"\n*Steps To Reproduce*\n{details['stepsToReproduce']}"
+
+        return self.text_translator.rally_html_to_jira(description)
 
     def _get_attachments(self, artifact):
         attachments = []
@@ -219,6 +235,16 @@ class RallyArtifactTranslator(object):
                     },
                 ]
             )
+
+        for key, value in self._config["jira"]["mappings"]["customfields"].items():
+            if artifact.get(key):
+                issue["customFieldValues"].append(
+                    {
+                        "fieldName": value["fieldName"],
+                        "fieldType": value["fieldType"],
+                        "value": artifact[key],
+                    }
+                )
 
 
 class JiraMigrator(object):

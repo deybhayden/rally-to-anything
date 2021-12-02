@@ -93,6 +93,10 @@ Accepted = "Accepted"
 [jira.mappings.labels]
 fields = ["iteration", "release", "milestones"]
 
+[jira.mappings.customfields.clientNames]
+fieldName = "Clients"
+fieldType = "com.atlassian.jira.plugin.system.customfieldtypes:multicheckboxes"
+
 [aws]
 sso_profile = "jira-migration"
 region = "us-east-1"
