@@ -86,6 +86,8 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
                 if hasattr(rally_artifact, attr):
                     artifact[key] = self._get_children(rally_artifact, attr=attr)
 
+        artifact.update(**self._get_custom_fields(rally_artifact))
+
         return artifact
 
     def _get_attachments(self, rally_artifact):
@@ -194,6 +196,24 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
         state = rally_artifact._get_or_none("State")
         if state:
             return state.Name if hasattr(state, "Name") else state
+
+    def _get_custom_fields(self, rally_artifact):
+        fields = {}
+
+        client_names = rally_artifact._get_or_none("c_ClientName")
+        if client_names:
+            fields["clientNames"] = [c.value for c in client_names]
+
+        if rally_artifact._type == "Defect":
+            fields["defectDetails"] = {
+                "actualResults": rally_artifact.ActualResults,
+                "expectedResults": rally_artifact.ExpectedResults,
+                "rootCause": rally_artifact.RootCause,
+                "siteURL": rally_artifact.SiteURL,
+                "stepsToReproduce": rally_artifact.StepstoReproduce,
+            }
+
+        return fields
 
 
 class RallyArtifact(object):
