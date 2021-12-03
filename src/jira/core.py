@@ -81,7 +81,7 @@ class RallyArtifactTranslator(object):
                 url = self._get_s3_presignedurl(attachment_filepath)
                 attachments.append(
                     {
-                        "name": f"{attachment['objectId']} - {attachment['name']}",
+                        "name": f"{attachment['name']} - {attachment['objectId']}",
                         "attacher": self._get_user(attachment["user"]),
                         "created": attachment["creationDate"],
                         "description": attachment["description"],
