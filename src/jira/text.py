@@ -11,7 +11,9 @@ HYPERLINK_RE = re.compile(
 class RallyTextTranslator(object):
     def __init__(self, config):
         self._config = config
-        self.zendesk_domain = urlparse(self._config["zendesk"]["sdk"]["server"]).netloc
+        self.zendesk_domain = urlparse(
+            f"https://{self._config['zendesk']['sdk']['subdomain']}.zendesk.com"
+        ).netloc
 
     def rally_html_to_jira(self, html):
         # bodywidth set to 0 so no wrapping

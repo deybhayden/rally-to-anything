@@ -19,6 +19,7 @@ rally-to-anything = {editable = true, path = "."}
 html2jira = {git = "https://github.com/Qazzian/html2jira.git"}
 boto3 = "*"
 halo = "*"
+zenpy = "*"
 
 [dev-packages]
 flake8 = "*"

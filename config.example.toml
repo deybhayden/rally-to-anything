@@ -97,6 +97,10 @@ fields = ["iteration", "release", "milestones"]
 fieldName = "Clients"
 fieldType = "com.atlassian.jira.plugin.system.customfieldtypes:multicheckboxes"
 
+[jira.mappings.customfields.zendesk_import]
+fieldName = "(Imported) Zendesk Ticket IDs"
+fieldType = "com.atlassian.jira.plugin.system.customfieldtypes:textarea"
+
 [aws]
 sso_profile = "jira-migration"
 region = "us-east-1"
@@ -106,4 +110,5 @@ s3_presign_expires = 600
 
 [zendesk]
 [zendesk.sdk]
-server = "https://example.zendesk.com"
+subdomain = "example"
+oauth_token = "<TOKEN>"

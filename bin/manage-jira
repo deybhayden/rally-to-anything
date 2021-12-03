@@ -5,6 +5,7 @@ import toml
 import tqdm
 from halo import Halo
 from jira import JIRA, JIRAError
+from zenpy import Zenpy
 
 
 def get_jira_sdk(config):
@@ -77,6 +78,40 @@ def delete_issue(issue):
         issue.delete(deleteSubtasks=True)
     except JIRAError:
         click.echo(f"Failed to delete {issue.key}!", err=True)
+
+
+@cli.command()
+@click.option("--config", type=click.File(), required=True, default="./config.toml")
+def link_imported_zendesk_tickets(config):
+    config = toml.load(config)
+    project = config["jira"]["project"]["key"]
+    zd_custom_field_name = config["jira"]["mappings"]["customfields"]["zendesk_import"][
+        "fieldName"
+    ]
+    click.echo(
+        f"Getting Jira issues with imported Zendesk tickets from project '{project}'..."
+    )
+    jira = get_jira_sdk(config)
+    zenpy = Zenpy(**config["zendesk"]["sdk"])
+    spinner = Halo(text="Loading Jira issues...", spinner="dots")
+    spinner.start()
+    # set maxResults to False to get all issues
+    issues = jira.search_issues(
+        f"project='{project}' AND '{zd_custom_field_name}' IS NOT EMPTY",
+        maxResults=False,
+    )
+    num_issues = len(issues)
+    spinner.stop()
+
+    jira_fields = {field["name"]: field["id"] for field in jira.fields()}
+    zd_custom_field_id = jira_fields[zd_custom_field_name]
+
+    for issue in tqdm.tqdm(issues, desc="Issues", total=num_issues):
+        zendesk_tickets = issue.fields[zd_custom_field_id].split(",")
+        for ticket_id in tqdm.tqdm(zendesk_tickets, desc="Zendesk Tickets"):
+            zenpy.jira_links.create(
+                {"issue_id": issue.id, "issue_key": issue.key, "ticket_id": ticket_id}
+            )
 
 
 if __name__ == "__main__":
