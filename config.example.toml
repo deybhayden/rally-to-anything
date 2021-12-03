@@ -39,10 +39,10 @@ Defect = "Bug"
 HierarchicalRequirement = "Sub-task"
 PortfolioItem = "Story"
 "PortfolioItem/Epic" = "Epic"
-Task = "Task"
+Task = "Sub-task"
 
 [jira.mappings.issuelinking]
-Task = "Dependent"
+Sub-task = "Dependent"
 
 [jira.mappings.priority]
 Critical = "Critical"

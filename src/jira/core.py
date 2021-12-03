@@ -260,6 +260,8 @@ class JiraMigrator(object):
         )
         self.rally_artifacts = self.load_rally_artifacts()
         self.jira_users = {}
+        self.translator = None
+        self.project = self._config["jira"]["project"].copy()
 
     def load_rally_artifacts(self):
         rally_artifacts = []
@@ -271,22 +273,19 @@ class JiraMigrator(object):
         return rally_artifacts
 
     def build_import_json(self, skip_attachment_upload=False):
-        translator = RallyArtifactTranslator(self, skip_attachment_upload)
-        project = self._config["jira"]["project"].copy()
-        project["issues"] = []
+        self.translator = RallyArtifactTranslator(self, skip_attachment_upload)
+        self.project["issues"] = []
         import_json = {
             "users": [],
             "links": [],
-            "projects": [project],
+            "projects": [self.project],
         }
 
         for artifact in tqdm.tqdm(self.rally_artifacts, "Artifacts"):
-            issue = translator.create_issue(artifact)
+            issue = self.translator.create_issue(artifact)
 
             if artifact["parent"]:
-                parent_issue = self._find_or_create_parent_issue(
-                    project, translator, artifact
-                )
+                parent_issue = self._find_or_create_parent_issue(artifact)
                 if parent_issue["issueType"] == "Epic":
                     issue["customFieldValues"].append(
                         {
@@ -296,33 +295,37 @@ class JiraMigrator(object):
                         }
                     )
 
-            project["issues"].append(issue)
+            self.project["issues"].append(issue)
 
-            for child_attrs in ("children", "stories", "tasks"):
-                for child in artifact.get(child_attrs, []):
-                    child_issue = translator.create_issue(child)
-                    issue_link = self._get_issue_link(issue, child_issue)
-                    if issue_link:
-                        import_json["links"].append(issue_link)
-                    project["issues"].append(child_issue)
+            self._add_children(import_json, artifact, issue)
 
         import_json["users"] = [
             {"email": email, **user} for (email, user) in self.jira_users.items()
         ]
         self._write_json_file(import_json)
 
-    def _find_or_create_parent_issue(self, project, translator, artifact):
+    def _find_or_create_parent_issue(self, artifact):
         matches = [
             i
-            for i in project["issues"]
+            for i in self.project["issues"]
             if artifact["parent"]["formattedId"] == i["externalId"]
         ]
         if matches:
             return matches[0]
         else:
-            parent_issue = translator.create_issue(artifact["parent"])
-            project["issues"].append(parent_issue)
+            parent_issue = self.translator.create_issue(artifact["parent"])
+            self.project["issues"].append(parent_issue)
             return parent_issue
+
+    def _add_children(self, import_json, artifact, issue):
+        for child_attrs in ("children", "stories", "tasks"):
+            for child in artifact.get(child_attrs, []):
+                child_issue = self.translator.create_issue(child)
+                issue_link = self._get_issue_link(issue, child_issue)
+                if issue_link:
+                    import_json["links"].append(issue_link)
+                self.project["issues"].append(child_issue)
+                self._add_children(import_json, child, child_issue)
 
     def _get_issue_link(self, issue, child_issue):
         link_type = self._config["jira"]["mappings"]["issuelinking"].get(
