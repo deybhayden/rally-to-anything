@@ -214,7 +214,7 @@ class RallyArtifactTranslator(object):
         if zendesk_tickets:
             issue["customFieldValues"].append(
                 {
-                    "fieldName": "Zendesk Ticket IDs",
+                    "fieldName": "(Imported) Zendesk Ticket IDs",
                     "fieldType": "com.atlassian.jira.plugin.system.customfieldtypes:textarea",
                     "value": ",".join(zendesk_tickets),
                 }
