@@ -255,6 +255,7 @@ class JiraMigrator(object):
         self.jira_users = {}
         self.translator = None
         self.project = self._config["jira"]["project"].copy()
+        self.ancestor = None
 
     def load_rally_artifacts(self, object_ids=None):
         rally_artifacts = []
@@ -293,6 +294,7 @@ class JiraMigrator(object):
                     )
 
             self.project["issues"].append(issue)
+            self.ancestor = issue
 
             self._add_children(import_json, artifact, issue)
 
@@ -318,11 +320,19 @@ class JiraMigrator(object):
         for child_attrs in ("children", "stories", "tasks"):
             for child in artifact.get(child_attrs, []):
                 child_issue = self.translator.create_issue(child)
-                issue_link = self._get_issue_link(issue, child_issue)
-                if issue_link:
-                    import_json["links"].append(issue_link)
+                self._add_issue_links(import_json, issue, child_issue)
                 self.project["issues"].append(child_issue)
                 self._add_children(import_json, child, child_issue)
+
+    def _add_issue_links(self, import_json, issue, child_issue):
+        issue_link = self._get_issue_link(issue, child_issue)
+        if issue_link:
+            import_json["links"].append(issue_link)
+
+        if self.ancestor["externalId"] != issue["externalId"]:
+            issue_link = self._get_issue_link(self.ancestor, child_issue)
+            if issue_link:
+                import_json["links"].append(issue_link)
 
     def _get_issue_link(self, issue, child_issue):
         link_type = self._config["jira"]["mappings"]["issuelinking"].get(
