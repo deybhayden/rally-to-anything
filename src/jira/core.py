@@ -241,7 +241,7 @@ class RallyArtifactTranslator(object):
 
 
 class JiraMigrator(object):
-    def __init__(self, config, verbose):
+    def __init__(self, config, verbose, object_ids=None):
         self._config = config
         self.verbose = verbose
         boto3.setup_default_session(profile_name=config["aws"]["sso_profile"])
@@ -251,16 +251,20 @@ class JiraMigrator(object):
             config=Config(signature_version="s3v4"),
             endpoint_url=config["aws"]["s3_endpoint_url"],
         )
-        self.rally_artifacts = self.load_rally_artifacts()
+        self.rally_artifacts = self.load_rally_artifacts(object_ids)
         self.jira_users = {}
         self.translator = None
         self.project = self._config["jira"]["project"].copy()
 
-    def load_rally_artifacts(self):
+    def load_rally_artifacts(self, object_ids=None):
         rally_artifacts = []
         artifact_root = RallyArtifact.output_root(self._config)
         for (dirpath, _, files) in os.walk(artifact_root):
             for filepath in files:
+                if object_ids:
+                    object_id, _ = filepath.split(".")
+                    if object_id not in object_ids:
+                        continue
                 with open(os.path.join(dirpath, filepath), "r") as f:
                     rally_artifacts.append(json.load(f))
         return rally_artifacts
@@ -322,7 +326,7 @@ class JiraMigrator(object):
 
     def _get_issue_link(self, issue, child_issue):
         link_type = self._config["jira"]["mappings"]["issuelinking"].get(
-            child_issue["issueType"], "sub-task-link"
+            issue["issueType"], "sub-task-link"
         )
 
         if link_type == "sub-task-link":

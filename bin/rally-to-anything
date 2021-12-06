@@ -30,11 +30,12 @@ def dump_rally(verbose, clear_cache, attachments, config):
 @cli.command()
 @click.option("-v", "--verbose", default=False, is_flag=True)
 @click.option("-s", "--skip-upload", default=False, is_flag=True)
+@click.option("-o", "--object-id", multiple=True)
 @click.option("--config", type=click.File(), required=True, default="./config.toml")
-def generate_jira_import_json(verbose, skip_upload, config):
+def generate_jira_import_json(verbose, skip_upload, object_id, config):
     config = toml.load(config)
     click.echo("Generating Rally To Jira JSON...")
-    migrator = src.jira.JiraMigrator(config, verbose)
+    migrator = src.jira.JiraMigrator(config, verbose, object_ids=object_id)
     migrator.build_import_json(skip_upload)
     click.echo(
         f"{config['jira']['json']['filepath']} generation complete. Upload to the JSON Importer of your Jira instance."

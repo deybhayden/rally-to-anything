@@ -3,6 +3,13 @@
   // Hover to view descriptions of existing attributes.
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
+  "inputs": [
+    {
+      "id": "objectId",
+      "type": "promptString",
+      "description": "Rally Artifact Object ID"
+    }
+  ],
   "configurations": [
     {
       "name": "dump rally with attachments",
@@ -50,6 +57,20 @@
       "request": "launch",
       "program": "${workspaceFolder}/bin/rally-to-anything",
       "args": ["generate-jira-import-json", "-v", "-s"],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "generate jira json - with object id",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/bin/rally-to-anything",
+      "args": [
+        "generate-jira-import-json",
+        "-v",
+        "-s",
+        "-o",
+        "${input:objectId}"
+      ],
       "console": "integratedTerminal"
     }
   ]

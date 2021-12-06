@@ -42,6 +42,8 @@ PortfolioItem = "Story"
 Task = "Sub-task"
 
 [jira.mappings.issuelinking]
+Defect = "sub-task-link"
+Story = "sub-task-link"
 Sub-task = "Dependent"
 
 [jira.mappings.priority]
