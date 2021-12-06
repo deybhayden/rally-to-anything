@@ -113,4 +113,5 @@ s3_presign_expires = 600
 [zendesk]
 [zendesk.sdk]
 subdomain = "example"
-oauth_token = "<TOKEN>"
+email = "susan@example.com"
+token = "<TOKEN>"

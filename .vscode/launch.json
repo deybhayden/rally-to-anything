@@ -72,6 +72,14 @@
         "${input:objectId}"
       ],
       "console": "integratedTerminal"
+    },
+    {
+      "name": "link imported zendesk tickets in jira",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/bin/manage-jira",
+      "args": ["link-imported-zendesk-tickets"],
+      "console": "integratedTerminal"
     }
   ]
 }
