@@ -1,3 +1,5 @@
+import shutil
+
 import click
 import toml
 import tqdm
@@ -21,6 +23,7 @@ def dump_rally(verbose, clear_cache, attachments, config):
     click.echo("Dumping from Rally...")
     rally = src.rally.Rally(config, verbose)
     if verbose and clear_cache:
+        shutil.rmtree(config["rally"]["output_root"])
         click.echo("Clearing local Rally artifact cache...")
 
     for artifact in tqdm.tqdm(rally.artifacts, desc="Artifacts"):
