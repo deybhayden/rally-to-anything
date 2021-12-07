@@ -1,4 +1,5 @@
 import csv
+import re
 
 import click
 import toml
@@ -8,6 +9,8 @@ from jira import JIRA, JIRAError
 from zenpy import Zenpy
 from zenpy.lib.api_objects import Link
 from zenpy.lib.exception import APIException
+
+NO_DIGIT_RE = re.compile(r"[^\d]+")
 
 
 def delete_zendesk_jira_links(zenpy_client, issue):
@@ -45,6 +48,16 @@ def get_jira_sdk(config):
 def get_zenpy_client(config):
     zenpy_client = Zenpy(**config["zendesk"]["sdk"])
     return zenpy_client
+
+
+def get_zendesk_tickets(issue, zd_custom_field_id):
+    results = []
+    tickets = getattr(issue.fields, zd_custom_field_id).split(",")
+    for ticket_id in tickets:
+        ticket_id = NO_DIGIT_RE.sub("", ticket_id)
+        if ticket_id and ticket_id not in results:
+            results.append(ticket_id)
+    return results
 
 
 @click.group()
@@ -127,7 +140,7 @@ def link_imported_zendesk_tickets(config):
     zd_custom_field_id = get_custom_field_id(jira, zd_custom_field_name)
 
     for issue in tqdm.tqdm(issues, desc="Jira Issues", total=num_issues):
-        zendesk_tickets = getattr(issue.fields, zd_custom_field_id).split(",")
+        zendesk_tickets = get_zendesk_tickets(issue, zd_custom_field_id)
         for ticket_id in tqdm.tqdm(zendesk_tickets, desc="Zendesk Tickets"):
             try:
                 zenpy_client.jira_links.create(
@@ -145,8 +158,7 @@ def remove_zendesk_ticket_links(config):
     click.echo(f"Getting Jira issues with Zendesk tickets from project '{project}'...")
     jira = get_jira_sdk(config)
     zenpy_client = get_zenpy_client(config)
-    zd_custom_field_name = "Zendesk Ticket IDs"
-    issues = get_jira_issues_with_zendesk_tickets(jira, project, zd_custom_field_name)
+    issues = get_jira_issues_with_zendesk_tickets(jira, project, "Zendesk Ticket IDs")
     num_issues = len(issues)
 
     for issue in tqdm.tqdm(issues, desc="Jira Issues", total=num_issues):
