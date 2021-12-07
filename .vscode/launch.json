@@ -80,6 +80,14 @@
       "program": "${workspaceFolder}/bin/manage-jira",
       "args": ["link-imported-zendesk-tickets"],
       "console": "integratedTerminal"
+    },
+    {
+      "name": "remove linked zendesk tickets in jira",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/bin/manage-jira",
+      "args": ["remove-zendesk-ticket-links"],
+      "console": "integratedTerminal"
     }
   ]
 }

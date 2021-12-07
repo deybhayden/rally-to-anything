@@ -10,6 +10,28 @@ from zenpy.lib.api_objects import Link
 from zenpy.lib.exception import APIException
 
 
+def delete_zendesk_jira_links(zenpy_client, issue):
+    for link in zenpy_client.jira_links(issue_id=issue.id):
+        zenpy_client.jira_links.delete(link)
+
+
+def get_custom_field_id(jira, custom_field_name):
+    jira_fields = {field["name"]: field["id"] for field in jira.fields()}
+    return jira_fields[custom_field_name]
+
+
+def get_jira_issues_with_zendesk_tickets(jira, project, zd_custom_field_name):
+    spinner = Halo(text="Loading Jira issues...", spinner="dots")
+    spinner.start()
+    # set maxResults to False to get all issues
+    issues = jira.search_issues(
+        f"project='{project}' AND '{zd_custom_field_name}' IS NOT EMPTY",
+        maxResults=False,
+    )
+    spinner.stop()
+    return issues
+
+
 def get_jira_sdk(config):
     return JIRA(
         config["jira"]["sdk"]["server"],
@@ -23,11 +45,6 @@ def get_jira_sdk(config):
 def get_zenpy_client(config):
     zenpy_client = Zenpy(**config["zendesk"]["sdk"])
     return zenpy_client
-
-
-def get_custom_field_id(jira, custom_field_name):
-    jira_fields = {field["name"]: field["id"] for field in jira.fields()}
-    return jira_fields[custom_field_name]
 
 
 @click.group()
@@ -82,22 +99,8 @@ def empty_project(dry_run, config):
         click.echo(f"Dry run! Would have deleted {num_issues} issues to delete.")
         return
 
-    zd_custom_field_id = get_custom_field_id(jira, "Zendesk Ticket IDs")
-
     for issue in tqdm.tqdm(issues, total=num_issues):
-        zendesk_tickets = getattr(issue.fields, zd_custom_field_id, None)
-        if zendesk_tickets:
-            for ticket_id in tqdm.tqdm(
-                zendesk_tickets.split(","), desc="Zendesk Tickets"
-            ):
-                try:
-                    zenpy_client.jira_links.delete(
-                        Link(
-                            issue_id=issue.id, issue_key=issue.key, ticket_id=ticket_id
-                        )
-                    )
-                except APIException as exc:
-                    click.echo(f" {issue.key} - {exc.response.text}")
+        delete_zendesk_jira_links(zenpy_client, issue)
 
         try:
             issue.delete(deleteSubtasks=True)
@@ -115,19 +118,12 @@ def link_imported_zendesk_tickets(config):
     )
     jira = get_jira_sdk(config)
     zenpy_client = get_zenpy_client(config)
-    spinner = Halo(text="Loading Jira issues...", spinner="dots")
-    spinner.start()
     zd_custom_field_name = config["jira"]["mappings"]["customfields"]["zendesk_import"][
         "fieldName"
     ]
-    # set maxResults to False to get all issues
-    issues = jira.search_issues(
-        f"project='{project}' AND '{zd_custom_field_name}' IS NOT EMPTY",
-        maxResults=False,
-    )
-    num_issues = len(issues)
-    spinner.stop()
+    issues = get_jira_issues_with_zendesk_tickets(jira, project, zd_custom_field_name)
 
+    num_issues = len(issues)
     zd_custom_field_id = get_custom_field_id(jira, zd_custom_field_name)
 
     for issue in tqdm.tqdm(issues, desc="Jira Issues", total=num_issues):
@@ -139,6 +135,22 @@ def link_imported_zendesk_tickets(config):
                 )
             except APIException as exc:
                 click.echo(f" {issue.key} - {exc.response.text}")
+
+
+@cli.command()
+@click.option("--config", type=click.File(), required=True, default="./config.toml")
+def remove_zendesk_ticket_links(config):
+    config = toml.load(config)
+    project = config["jira"]["project"]["key"]
+    click.echo(f"Getting Jira issues with Zendesk tickets from project '{project}'...")
+    jira = get_jira_sdk(config)
+    zenpy_client = get_zenpy_client(config)
+    zd_custom_field_name = "Zendesk Ticket IDs"
+    issues = get_jira_issues_with_zendesk_tickets(jira, project, zd_custom_field_name)
+    num_issues = len(issues)
+
+    for issue in tqdm.tqdm(issues, desc="Jira Issues", total=num_issues):
+        delete_zendesk_jira_links(zenpy_client, issue)
 
 
 if __name__ == "__main__":
