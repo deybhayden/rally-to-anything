@@ -22,19 +22,21 @@ just looking for examples of how to do something similar.
 - Configurable mapping and aggregation for Rally fields with sane defaults.
 - Dump and serialize data from Rally on disk with support for incremental updates
   when data changes (all data new first run). Support for:
-  - Iterations
+  - Releases & Iterations
   - Epics, Features, User Stories, Defects
   - Discussions and attachments for above.
-  - Dynamic fields converted to labels: Milestones, Releases
+  - Dynamic fields converted to labels: Milestones
 - Migrate serialized Rally data produced by this utility
   |Rally|Clubhouse|Jira|
   |--|--|--|
-  |Iteration|Iteration|Label|
+  |Release|--|Version|
+  |Iteration|Iteration|Sprint|
   |Milestones|Milestones|Label|
   |Epic|Epic|Epic|
   |Feature|Epic|Story|
   |User Story|Story|Sub-Task|
   |Defect|Story (type: :bug:)|Bug|
+- Uses the [Zendesk Support Jira App](https://www.zendesk.com/apps/support/24475/jira/) to create links to zendesk tickets extracted from Rally text fields.
 
   Fields to be converted based upon configuration. Reasonable defaults
   will be defined in the repository as examples/for ease of use.
@@ -107,6 +109,10 @@ aws sso login --profile jira-migration
 pipenv shell
 rally-to-anything dump-rally --config <config-location> --attachments
 rally-to-anything generate-jira-import-json --config <config-location>
+# upload the JSON file on the External Import screen in Global Jira Settings
+# after the initial import, you can link your Zendesk tickets to Jira issues
+manage-jira link-imported-zendesk-tickets
+# all done?
 manage-jira empty-project
 ```
 

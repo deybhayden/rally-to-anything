@@ -93,7 +93,7 @@ Rejected = "Cannot Reproduce"
 Accepted = "Accepted"
 
 [jira.mappings.labels]
-fields = ["iteration", "release", "milestones"]
+fields = ["milestones"]
 
 [jira.mappings.customfields.clientNames]
 fieldName = "Clients"
