@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime
 
 import boto3
 import tqdm
@@ -17,6 +18,7 @@ class RallyArtifactTranslator(object):
         self._config = self.migrator._config
         self.mappings = self._config["jira"]["mappings"]
         self.text_translator = RallyTextTranslator(self._config)
+        self.today = datetime.now()
 
     def create_issue(self, artifact):
         issuetype = self.mappings["artifacts"][artifact["type"]]
@@ -50,6 +52,9 @@ class RallyArtifactTranslator(object):
 
         if artifact["blocked"]:
             issue["labels"].append("Blocked")
+
+        if artifact["release"]:
+            self._set_version(issue, artifact["release"])
 
         self._set_custom_fields(issue, artifact, zendesk_tickets)
 
@@ -172,6 +177,37 @@ class RallyArtifactTranslator(object):
                     labels.append(value)
         return labels
 
+    def _get_sprint(self, iteration):
+        start_date = datetime.strptime(
+            iteration["endDate"], "%Y-%m-%dT%H:%M:%S.%f%z"
+        ).replace(tzinfo=None)
+        end_date = datetime.strptime(
+            iteration["endDate"], "%Y-%m-%dT%H:%M:%S.%f%z"
+        ).replace(tzinfo=None)
+
+        iteration_state = None
+        if start_date < self.today < end_date:
+            iteration_state = "ACTIVE"
+        elif end_date < self.today:
+            iteration_state = "CLOSED"
+        elif self.today < start_date:
+            iteration_state = "FUTURE"
+
+        return {
+            "fieldName": "Sprint",
+            "fieldType": "com.pyxis.greenhopper.jira:gh-sprint",
+            "value": [
+                {
+                    "rapidViewId": self.mappings["sprints"]["rapidViewId"],
+                    "state": iteration_state,
+                    "startDate": iteration["startDate"],
+                    "endDate": iteration["endDate"],
+                    "completeDate": iteration["endDate"],
+                    "name": iteration["name"],
+                }
+            ],
+        }
+
     def _get_status(self, issuetype, artifact):
         if issuetype == "Epic" and "epic" in self.mappings["status"]:
             return self.mappings["status"]["epic"][artifact["state"]]
@@ -211,6 +247,9 @@ class RallyArtifactTranslator(object):
                 }
             )
 
+        if artifact["iteration"]:
+            issue["customFieldValues"].append(self._get_sprint(artifact["iteration"]))
+
         if zendesk_tickets:
             issue["customFieldValues"].append(
                 {
@@ -238,6 +277,21 @@ class RallyArtifactTranslator(object):
         for key, value in self.mappings["customfields"].items():
             if artifact.get(key):
                 issue["customFieldValues"].append({"value": artifact[key], **value})
+
+    def _set_version(self, issue, release):
+        release_date = datetime.strptime(
+            release["releaseDate"], "%Y-%m-%dT%H:%M:%S.%f%z"
+        ).replace(tzinfo=None)
+        version = {
+            "name": release["name"],
+            "released": release_date < self.today,
+            "startDate": release["releaseStartDate"],
+            "releaseDate": release["releaseDate"],
+        }
+        issue["fixVersions"] = version["name"]
+        existing_versions = [v["name"] for v in self.migrator.project["versions"]]
+        if version["name"] not in existing_versions:
+            self.migrator.project["versions"].append(version)
 
 
 class JiraMigrator(object):
@@ -273,6 +327,7 @@ class JiraMigrator(object):
     def build_import_json(self, skip_attachment_upload=False):
         self.translator = RallyArtifactTranslator(self, skip_attachment_upload)
         self.project["issues"] = []
+        self.project["versions"] = []
         import_json = {
             "users": [],
             "links": [],
