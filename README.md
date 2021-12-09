@@ -32,8 +32,8 @@ just looking for examples of how to do something similar.
   |Release|--|Version|
   |Iteration|Iteration|Sprint|
   |Milestones|Milestones|Label|
-  |Epic|Epic|Epic|
-  |Feature|Epic|Story|
+  |Epic|Epic|--|
+  |Feature|Epic|Epic|
   |User Story|Story|Sub-Task|
   |Defect|Story (type: :bug:)|Bug|
 - Uses the [Zendesk Support Jira App](https://www.zendesk.com/apps/support/24475/jira/) to create links to zendesk tickets extracted from Rally text fields.
@@ -109,7 +109,7 @@ aws sso login --profile jira-migration
 pipenv shell
 rally-to-anything dump-rally --config <config-location> --attachments
 rally-to-anything generate-jira-import-json --config <config-location>
-# upload the JSON file on the External Import screen in Global Jira Settings
+# upload the JSON file on the External System Import screen in Global Jira Settings
 # after the initial import, you can link your Zendesk tickets to Jira issues
 manage-jira link-imported-zendesk-tickets
 # all done?

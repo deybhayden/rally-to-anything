@@ -288,7 +288,7 @@ class RallyArtifactTranslator(object):
             "startDate": release["releaseStartDate"],
             "releaseDate": release["releaseDate"],
         }
-        issue["fixVersions"] = version["name"]
+        issue["fixVersions"] = [version["name"]]
         existing_versions = [v["name"] for v in self.migrator.project["versions"]]
         if version["name"] not in existing_versions:
             self.migrator.project["versions"].append(version)
@@ -336,21 +336,8 @@ class JiraMigrator(object):
 
         for artifact in tqdm.tqdm(self.rally_artifacts, "Artifacts"):
             issue = self.translator.create_issue(artifact)
-
-            if artifact["parent"]:
-                parent_issue = self._find_or_create_parent_issue(artifact)
-                if parent_issue["issueType"] == "Epic":
-                    issue["customFieldValues"].append(
-                        {
-                            "fieldName": "Epic Link",
-                            "fieldType": "com.pyxis.greenhopper.jira:gh-epic-link",
-                            "value": parent_issue["summary"],
-                        }
-                    )
-
             self.project["issues"].append(issue)
             self.ancestor = issue
-
             self._add_children(import_json, artifact, issue)
 
         import_json["users"] = [
@@ -375,7 +362,16 @@ class JiraMigrator(object):
         for child_attrs in ("children", "stories", "tasks"):
             for child in artifact.get(child_attrs, []):
                 child_issue = self.translator.create_issue(child)
-                self._add_issue_links(import_json, issue, child_issue)
+                if issue["issueType"] == "Epic":
+                    child_issue["customFieldValues"].append(
+                        {
+                            "fieldName": "Epic Link",
+                            "fieldType": "com.pyxis.greenhopper.jira:gh-epic-link",
+                            "value": issue["summary"],
+                        }
+                    )
+                else:
+                    self._add_issue_links(import_json, issue, child_issue)
                 self.project["issues"].append(child_issue)
                 self._add_children(import_json, child, child_issue)
 
