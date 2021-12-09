@@ -336,6 +336,11 @@ class JiraMigrator(object):
 
         for artifact in tqdm.tqdm(self.rally_artifacts, "Artifacts"):
             issue = self.translator.create_issue(artifact)
+
+            if artifact["parent"]:
+                if artifact["parent"]["type"] == "PortfolioItem/Epic":
+                    issue["labels"].append(artifact["parent"]["name"])
+
             self.project["issues"].append(issue)
             self.ancestor = issue
             self._add_children(import_json, artifact, issue)
