@@ -179,7 +179,7 @@ class RallyArtifactTranslator(object):
 
     def _get_sprint(self, iteration):
         start_date = datetime.strptime(
-            iteration["endDate"], "%Y-%m-%dT%H:%M:%S.%f%z"
+            iteration["startDate"], "%Y-%m-%dT%H:%M:%S.%f%z"
         ).replace(tzinfo=None)
         end_date = datetime.strptime(
             iteration["endDate"], "%Y-%m-%dT%H:%M:%S.%f%z"
