@@ -115,12 +115,15 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
     def _get_blocker(self, rally_artifact):
         blocker = rally_artifact._get_or_none("Blocker")
         if blocker:
-            return {
-                "objectId": blocker.ObjectID,
-                "name": blocker.Name,
-                "blockedBy": _format_user(blocker.BlockedBy),
-                "creationDate": blocker.CreationDate,
-            }
+            try:
+                return {
+                    "objectId": blocker.ObjectID,
+                    "name": blocker.Name,
+                    "blockedBy": _format_user(blocker.BlockedBy),
+                    "creationDate": blocker.CreationDate,
+                }
+            except UnreferenceableOIDError:
+                return
 
     def _get_children(self, rally_artifact, attr="Children"):
         encoded_children = []
