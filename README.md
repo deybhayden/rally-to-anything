@@ -32,7 +32,7 @@ just looking for examples of how to do something similar.
   |Release|--|Version|
   |Iteration|Iteration|Sprint|
   |Milestones|Milestones|Label|
-  |Epic|Epic|--|
+  |Epic|Epic|Label|
   |Feature|Epic|Epic|
   |User Story|Story|Sub-Task|
   |Defect|Story (type: :bug:)|Bug|
