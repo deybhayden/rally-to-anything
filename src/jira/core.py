@@ -288,7 +288,7 @@ class RallyArtifactTranslator(object):
             "startDate": release["releaseStartDate"],
             "releaseDate": release["releaseDate"],
         }
-        issue["fixVersions"] = [version["name"]]
+        issue["fixedVersions"] = [version["name"]]
         existing_versions = [v["name"] for v in self.migrator.project["versions"]]
         if version["name"] not in existing_versions:
             self.migrator.project["versions"].append(version)
