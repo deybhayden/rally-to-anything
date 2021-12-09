@@ -348,19 +348,6 @@ class JiraMigrator(object):
         ]
         self._write_json_file(import_json)
 
-    def _find_or_create_parent_issue(self, artifact):
-        matches = [
-            i
-            for i in self.project["issues"]
-            if artifact["parent"]["formattedId"] == i["externalId"]
-        ]
-        if matches:
-            return matches[0]
-        else:
-            parent_issue = self.translator.create_issue(artifact["parent"])
-            self.project["issues"].append(parent_issue)
-            return parent_issue
-
     def _add_children(self, import_json, artifact, issue):
         for child_attrs in ("children", "stories", "tasks"):
             for child in artifact.get(child_attrs, []):
