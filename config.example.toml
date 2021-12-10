@@ -104,6 +104,10 @@ fields = ["milestones"]
 fieldName = "Clients"
 fieldType = "com.atlassian.jira.plugin.system.customfieldtypes:multicheckboxes"
 
+[jira.mappings.customfields.project]
+fieldName = "Team"
+fieldType = "com.atlassian.jira.plugin.system.customfieldtypes:select"
+
 [jira.mappings.customfields.zendesk_import]
 fieldName = "(Imported) Zendesk Ticket IDs"
 fieldType = "com.atlassian.jira.plugin.system.customfieldtypes:textarea"
