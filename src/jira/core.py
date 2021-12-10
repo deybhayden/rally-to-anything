@@ -275,8 +275,14 @@ class RallyArtifactTranslator(object):
             )
 
         for key, value in self.mappings["customfields"].items():
-            if artifact.get(key):
-                issue["customFieldValues"].append({"value": artifact[key], **value})
+            key_value = artifact.get(key)
+            if key_value:
+                different_project = (
+                    key == "project"
+                    and key_value != self._config["rally"]["sdk"]["project"]
+                )
+                if different_project:
+                    issue["customFieldValues"].append({"value": artifact[key], **value})
 
     def _set_version(self, issue, release):
         release_date = datetime.strptime(
