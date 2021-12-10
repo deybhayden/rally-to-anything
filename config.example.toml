@@ -12,6 +12,11 @@ entity = "PortfolioItem/Feature"
 query = ["State != Done", "State != Removed"]
 threads = 4
 
+[rally.artifacts.stories]
+entity = "HierarchicalRequirement"
+query = ["ScheduleState != Done/Merged", "Feature = null"]
+threads = 4
+
 [rally.artifacts.defects]
 entity = "Defect"
 query = "((State = Open) OR (State = Submitted))"
