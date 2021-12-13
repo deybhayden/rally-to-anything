@@ -254,7 +254,7 @@ class RallyArtifactTranslator(object):
             issue["customFieldValues"].append(
                 {
                     "value": ",".join(zendesk_tickets),
-                    **self.mappings["customfields"]["zendesk_import"],
+                    **self.mappings["zendesk_import"],
                 }
             )
 
@@ -274,15 +274,30 @@ class RallyArtifactTranslator(object):
                 ]
             )
 
-        for key, value in self.mappings["customfields"].items():
-            key_value = artifact.get(key)
-            if key_value:
-                different_project = (
-                    key == "project"
-                    and key_value != self._config["rally"]["sdk"]["project"]
+        for cf_name, cf_options in self.mappings["customfields"].items():
+            cf_value = self._get_cf_value(artifact, cf_name, cf_options)
+            if cf_value:
+                issue["customFieldValues"].append(
+                    {
+                        "value": cf_value,
+                        "fieldName": cf_options["fieldName"],
+                        "fieldType": cf_options["fieldType"],
+                    }
                 )
-                if different_project:
-                    issue["customFieldValues"].append({"value": artifact[key], **value})
+
+    def _get_cf_value(self, artifact, cf_name, cf_options):
+        cf_value = artifact.get(cf_name)
+        if not cf_value:
+            return
+
+        skip_values = tuple(cf_options.get("skip_values", ()))
+
+        if not skip_values:
+            return cf_value
+        elif isinstance(cf_value, list):
+            return [c for c in cf_value if not c.startswith(skip_values)]
+        elif not cf_value.startswith(skip_values):
+            return cf_value
 
     def _set_version(self, issue, release):
         release_date = datetime.strptime(

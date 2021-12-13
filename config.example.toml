@@ -103,12 +103,14 @@ fields = ["milestones"]
 [jira.mappings.customfields.clientNames]
 fieldName = "Clients"
 fieldType = "com.atlassian.jira.plugin.system.customfieldtypes:multicheckboxes"
+skip_values = ["None", "No Clients Affected", "All Clients Affected"]
 
 [jira.mappings.customfields.project]
 fieldName = "Team"
 fieldType = "com.atlassian.jira.plugin.system.customfieldtypes:select"
+skip_values = ["Example", "xArchived"]
 
-[jira.mappings.customfields.zendesk_import]
+[jira.mappings.zendesk_import]
 fieldName = "(Imported) Zendesk Ticket IDs"
 fieldType = "com.atlassian.jira.plugin.system.customfieldtypes:textarea"
 

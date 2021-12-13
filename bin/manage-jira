@@ -131,9 +131,7 @@ def link_imported_zendesk_tickets(config):
     )
     jira = get_jira_sdk(config)
     zenpy_client = get_zenpy_client(config)
-    zd_custom_field_name = config["jira"]["mappings"]["customfields"]["zendesk_import"][
-        "fieldName"
-    ]
+    zd_custom_field_name = config["jira"]["mappings"]["zendesk_import"]["fieldName"]
     issues = get_jira_issues_with_zendesk_tickets(jira, project, zd_custom_field_name)
 
     num_issues = len(issues)
