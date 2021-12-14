@@ -93,7 +93,6 @@ Done = "Done"
 Duplicate = "Duplicate"
 "Won't Fix" = "Won't Do"
 Rejected = "Cannot Reproduce"
-Accepted = "Accepted"
 
 [jira.mappings.labels]
 fields = ["milestones"]
