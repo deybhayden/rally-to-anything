@@ -53,17 +53,15 @@ Sub-task = "Dependent"
 
 [jira.mappings.priority]
 Critical = "Critical"
-Urgent = "Highest"
-High = "Medium"
-Normal = "Low"
-Low = "Lowest"
+Urgent = "Urgent"
+High = "High"
+Normal = "Normal"
+Low = "Low"
 
 [jira.mappings.status.issue]
-Backlog = "Backlog"
-Review = "Backlog"
-Defined = "Defined"
-Discovering = "To Do"
-"To Do" = "To Do"
+Backlog = "Open"
+Review = "Open"
+Defined = "Open"
 Developing = "In Progress"
 "In-Progress" = "In Progress"
 "In Progress" = "In Progress"
@@ -73,7 +71,7 @@ Completed = "Complete"
 Accepted = "Accepted"
 "Done/Merged" = "Done"
 Done = "Done"
-Removed = "Removed"
+Removed = "Won't Do"
 
 [jira.mappings.status.epic]
 Discovering = "To Do"
