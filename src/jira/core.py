@@ -247,7 +247,7 @@ class RallyArtifactTranslator(object):
                 }
             )
 
-        if artifact["iteration"]:
+        if artifact["iteration"] and "sprints" in self.mappings:
             issue["customFieldValues"].append(self._get_sprint(artifact["iteration"]))
 
         if zendesk_tickets:
