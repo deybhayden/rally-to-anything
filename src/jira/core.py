@@ -274,16 +274,17 @@ class RallyArtifactTranslator(object):
                 ]
             )
 
-        for cf_name, cf_options in self.mappings["customfields"].items():
-            cf_value = self._get_cf_value(artifact, cf_name, cf_options)
-            if cf_value:
-                issue["customFieldValues"].append(
-                    {
-                        "value": cf_value,
-                        "fieldName": cf_options["fieldName"],
-                        "fieldType": cf_options["fieldType"],
-                    }
-                )
+        if "customfields" in self.mappings:
+            for cf_name, cf_options in self.mappings["customfields"].items():
+                cf_value = self._get_cf_value(artifact, cf_name, cf_options)
+                if cf_value:
+                    issue["customFieldValues"].append(
+                        {
+                            "value": cf_value,
+                            "fieldName": cf_options["fieldName"],
+                            "fieldType": cf_options["fieldType"],
+                        }
+                    )
 
     def _get_cf_value(self, artifact, cf_name, cf_options):
         cf_value = artifact.get(cf_name)
