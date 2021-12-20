@@ -151,14 +151,10 @@ class RallyArtifactTranslator(object):
         return comments
 
     def _get_components(self, artifact):
-        components = []
-        if artifact["component"]:
-            if isinstance(artifact["component"], list):
-                components = [{"name": c} for c in artifact["component"]]
-            else:
-                components.append({"name": artifact["component"]})
-
-        return components
+        components = artifact.get("components")
+        if components:
+            return [{"name": c} for c in components]
+        return []
 
     def _get_labels(self, artifact):
         labels = []

@@ -51,7 +51,6 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
             "blockedReason": rally_artifact.BlockedReason,
             "blocker": self._get_blocker(rally_artifact),
             "priority": rally_artifact._get_or_none("Priority"),
-            "component": rally_artifact._get_or_none("Component"),
             "formattedId": rally_artifact.FormattedID,
             "description": rally_artifact.Description,
             "notes": rally_artifact.Notes,
@@ -203,9 +202,20 @@ class RallyArtifactJSONSerializer(json.JSONEncoder):
     def _get_custom_fields(self, rally_artifact):
         fields = {}
 
-        client_names = rally_artifact._get_or_none("c_ClientName")
-        if client_names:
-            fields["clientNames"] = [c.value for c in client_names]
+        for (field_key, artifact_attr) in (
+            ("components", "c_Component"),
+            ("clientNames", "c_ClientName"),
+        ):
+            c_field = rally_artifact._get_or_none(artifact_attr)
+            if c_field:
+                if isinstance(c_field, list):
+                    fields[field_key] = [
+                        c if isinstance(c, str) else c.value for c in c_field
+                    ]
+                else:
+                    fields[field_key] = [
+                        c_field if isinstance(c_field, str) else c_field.value
+                    ]
 
         if rally_artifact._type == "Defect":
             fields["defectDetails"] = {
