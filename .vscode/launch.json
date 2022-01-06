@@ -88,6 +88,19 @@
       "program": "${workspaceFolder}/bin/manage-jira",
       "args": ["remove-zendesk-ticket-links"],
       "console": "integratedTerminal"
+    },
+    {
+      "name": "reupload failed rally attachments in jira",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/bin/manage-jira",
+      "args": [
+        "reupload-failed-rally-attachments",
+        "-v",
+        "-l",
+        "~/Downloads/bc-import.log"
+      ],
+      "console": "integratedTerminal"
     }
   ]
 }

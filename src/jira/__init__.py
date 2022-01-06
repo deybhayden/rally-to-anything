@@ -1,1 +1,1 @@
-from .core import JiraMigrator
+from .core import JiraMigrator, RallyArtifactTranslator

@@ -1,5 +1,7 @@
 import csv
 import re
+from urllib.parse import urlparse
+
 
 import click
 import toml
@@ -9,6 +11,9 @@ from jira import JIRA, JIRAError
 from zenpy import Zenpy
 from zenpy.lib.api_objects import Link
 from zenpy.lib.exception import APIException
+
+from src.jira import JiraMigrator, RallyArtifactTranslator
+from src.jira.text import HYPERLINK_RE
 
 NO_DIGIT_RE = re.compile(r"[^\d]+")
 
@@ -161,6 +166,41 @@ def remove_zendesk_ticket_links(config):
 
     for issue in tqdm.tqdm(issues, desc="Jira Issues", total=num_issues):
         delete_zendesk_jira_links(zenpy_client, issue)
+
+
+@cli.command()
+@click.option("-v", "--verbose", default=False, is_flag=True)
+@click.option("-l", "--log-file", type=click.File(), required=True)
+@click.option("--config", type=click.File(), required=True, default="./config.toml")
+def reupload_failed_rally_attachments(verbose, log_file, config):
+    config = toml.load(config)
+    migrator = JiraMigrator(config, verbose)
+    translator = RallyArtifactTranslator(migrator)
+    jira = get_jira_sdk(config)
+
+    failed_attachments = []
+    for logline in log_file.readlines():
+        if "WARN - An exception occurred dealing with attachment" in logline:
+            matches = HYPERLINK_RE.findall(logline)
+            for match in matches:
+                parts = urlparse(match)
+                failed_attachments.append(int(parts.path.split("/")[3]))
+
+    click.echo(
+        f"Found {len(failed_attachments)} failed attachments for reupload into Jira."
+    )
+
+    for artifact in tqdm.tqdm(migrator.rally_artifacts, "Rally Artifacts"):
+        for attachment in artifact["attachments"]:
+            if attachment["objectId"] in failed_attachments:
+                (issue,) = jira.search_issues(
+                    f'"External issue ID[Short text]" = "{artifact["formattedId"]}"'
+                )
+                jira.add_attachment(
+                    issue=issue,
+                    attachment=translator._get_attachment_filepath(attachment),
+                    filename=f"{attachment['name']} - {attachment['objectId']}",
+                )
 
 
 if __name__ == "__main__":
