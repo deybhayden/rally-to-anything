@@ -8,6 +8,16 @@
       "id": "objectId",
       "type": "promptString",
       "description": "Rally Artifact Object ID"
+    },
+    {
+      "id": "issueKey1",
+      "type": "promptString",
+      "description": "Jira Issue Key"
+    },
+    {
+      "id": "issueKey2",
+      "type": "promptString",
+      "description": "Jira Issue Key"
     }
   ],
   "configurations": [
@@ -100,6 +110,28 @@
         "-l",
         "~/Downloads/bc-import.log"
       ],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "compare jira issues",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/bin/manage-jira",
+      "args": [
+        "compare-jira-issues",
+        "-i1",
+        "${input:issueKey1}",
+        "-i2",
+        "${input:issueKey2}"
+      ],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "sync epic status and status",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/bin/manage-jira",
+      "args": ["sync-epic-status-and-status"],
       "console": "integratedTerminal"
     }
   ]

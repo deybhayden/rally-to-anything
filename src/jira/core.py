@@ -205,9 +205,7 @@ class RallyArtifactTranslator(object):
         }
 
     def _get_status(self, issuetype, artifact):
-        if issuetype == "Epic" and "epic" in self.mappings["status"]:
-            return self.mappings["status"]["epic"][artifact["state"]]
-        elif issuetype == "Bug" and "bug" in self.mappings["status"]:
+        if issuetype == "Bug" and "bug" in self.mappings["status"]:
             return self.mappings["status"]["bug"][artifact["state"]]
         else:
             if artifact["scheduleState"]:
@@ -255,20 +253,23 @@ class RallyArtifactTranslator(object):
             )
 
         if issue["issueType"] == "Epic":
-            issue["customFieldValues"].extend(
-                [
-                    {
-                        "fieldName": "Epic Name",
-                        "fieldType": "com.pyxis.greenhopper.jira:gh-epic-label",
-                        "value": issue["summary"],
-                    },
+            issue["customFieldValues"].append(
+                {
+                    "fieldName": "Epic Name",
+                    "fieldType": "com.pyxis.greenhopper.jira:gh-epic-label",
+                    "value": issue["summary"],
+                }
+            )
+
+            epic_status = self.mappings["status"]["epic"].get(issue["status"])
+            if epic_status:
+                issue["customFieldValues"].append(
                     {
                         "fieldName": "Epic Status",
                         "fieldType": "com.pyxis.greenhopper.jira:gh-epic-status",
-                        "value": issue["status"],
-                    },
-                ]
-            )
+                        "value": epic_status,
+                    }
+                )
 
         if "customfields" in self.mappings:
             for cf_name, cf_options in self.mappings["customfields"].items():

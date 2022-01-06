@@ -203,5 +203,48 @@ def reupload_failed_rally_attachments(verbose, log_file, config):
                 )
 
 
+@cli.command()
+@click.option("-i1", "--issue-key-one")
+@click.option("-i2", "--issue-key-two")
+@click.option("--config", type=click.File(), required=True, default="./config.toml")
+def compare_jira_issues(issue_key_one, issue_key_two, config):
+    config = toml.load(config)
+    jira = get_jira_sdk(config)
+    issue_one = jira.issue(issue_key_one)
+    issue_two = jira.issue(issue_key_two)
+    print(issue_one, issue_two)
+
+
+@cli.command()
+@click.option("--config", type=click.File(), required=True, default="./config.toml")
+def sync_epic_status_and_status(config):
+    config = toml.load(config)
+    project = config["jira"]["project"]["key"]
+    click.echo(f"Syncing Epic Status & Status of Jira project '{project}'...")
+    jira = get_jira_sdk(config)
+    spinner = Halo(text="Loading Jira issues...", spinner="dots")
+    spinner.start()
+    # set maxResults to False to get all issues
+    epics = jira.search_issues(
+        f"project='{project}' AND issuetype='Epic'", maxResults=False
+    )
+    num_epics = len(epics)
+    spinner.stop()
+
+    epic_status_id = get_custom_field_id(jira, "Epic Status")
+    epic_statuses = {
+        "Open": {"id": "10000", "name": "To Do"},
+        "In Progress": {"id": "10001", "name": "In Progress"},
+        "Done": {"id": "10002", "name": "Done"},
+        "Won't Do": {"id": "10002", "name": "Done"},
+    }
+
+    for epic in tqdm.tqdm(epics, total=num_epics):
+        current_epic_status = getattr(epic.fields, epic_status_id)
+        new_epic_status = epic_statuses[epic.fields.status.name]
+        if current_epic_status.value != new_epic_status["name"]:
+            epic.update(fields={epic_status_id: new_epic_status})
+
+
 if __name__ == "__main__":
     cli()
