@@ -115,7 +115,7 @@ def empty_project(dry_run, config):
     spinner.stop()
 
     if dry_run:
-        click.echo(f"Dry run! Would have deleted {num_issues} issues to delete.")
+        click.echo(f"Dry run! Would have deleted {num_issues} issues.")
         return
 
     for issue in tqdm.tqdm(issues, total=num_issues):
@@ -245,6 +245,31 @@ def sync_epic_status_and_status(config):
         new_epic_status = epic_statuses[epic.fields.status.name]
         if current_epic_status.value != new_epic_status["name"]:
             epic.update(fields={epic_status_id: new_epic_status})
+
+
+@cli.command()
+@click.option("-d", "--dry-run", default=False, is_flag=True)
+@click.option("--config", type=click.File(), required=True, default="./config.toml")
+def fix_done_issues_with_empty_resolutions(dry_run, config):
+    config = toml.load(config)
+    click.echo("Fixing empty resolutions with Done statuses...")
+    jira = get_jira_sdk(config)
+    spinner = Halo(text="Loading Jira issues...", spinner="dots")
+    spinner.start()
+    # set maxResults to False to get all issues
+    issues = jira.search_issues(
+        'status in (Done, "Won\'t Do", "Cannot Reproduce", Duplicate) AND resolution IS EMPTY',
+        maxResults=False,
+    )
+    num_issues = len(issues)
+    spinner.stop()
+
+    if dry_run:
+        click.echo(f"Dry run! Would have updated {num_issues} issue's resolutions.")
+        return
+
+    for issue in tqdm.tqdm(issues, total=num_issues):
+        issue.update(fields={"resolution": {"name": issue.fields.status.name}})
 
 
 if __name__ == "__main__":
